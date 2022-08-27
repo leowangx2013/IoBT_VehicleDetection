@@ -4,7 +4,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input,Conv1D,LSTM
 
 # The structure of the encoder
-def model_LSTM(input_shape1=[128,2],classes=11):
+def model_LSTM(input_shape1=[256,5],classes=9):
     dr=0.3
     r=1e-4
 

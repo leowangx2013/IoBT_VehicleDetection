@@ -29,7 +29,7 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     First build the whole model -- encoder + classifer layers.
     Then train the model from very beginning.
     '''
-    encoder = model_LSTM(classes=11)
+    encoder = model_LSTM(classes=9)
     inputs = encoder.inputs
 
     dr=0.3
@@ -39,7 +39,7 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     x=Dense(128,activation="selu",name="FC1",kernel_regularizer=tf.keras.regularizers.l2(l=r))(x)
     x=Dropout(dr)(x)
 
-    outputs = Dense(11, activation="softmax", name="linear_Classifier")(x)
+    outputs = Dense(9, activation="softmax", name="linear_Classifier")(x)
     sup_model = Model(inputs=inputs, outputs=outputs, name="Sup_Model")
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
@@ -87,7 +87,7 @@ def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, b
     x=Dense(128,activation="selu",name="FC1",kernel_regularizer=tf.keras.regularizers.l2(l=r))(x)
     x=Dropout(dr,name="DP_2")(x)
 
-    outputs = Dense(11, activation="softmax", name="linear_Classifier")(x)
+    outputs = Dense(9, activation="softmax", name="linear_Classifier")(x)
     tune_model = Model(inputs=inputs, outputs=outputs, name="Tune_Model")
     
     for layer in tune_model.layers:
@@ -133,7 +133,7 @@ def train_simclr(X_train, batch_size=512, Epoch=100, temperature = 0.1):
     lr_decayed_fn = tf.keras.experimental.CosineDecay(initial_learning_rate=0.001, decay_steps=decay_steps)
     optimizer = tf.keras.optimizers.SGD(lr_decayed_fn)
 
-    base_model = model_LSTM(classes=11)
+    base_model = model_LSTM(classes=9)
     sim_model = attach_simclr_head(base_model)
     sim_model.summary()
     trained_simclr_model, epoch_losses = simclr_train_model(sim_model, X_train, optimizer, batch_size, temperature=temperature, epochs=Epoch, verbose=1)

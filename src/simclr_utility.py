@@ -5,8 +5,8 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense,BatchNormalization,Activation
-from src.data_aug import *
-
+# from src.data_aug import *
+from src.data_aug_arl import *
 
 def attach_simclr_head(base_model, hidden_1=128, hidden_2=64):
     """
@@ -37,7 +37,7 @@ def attach_simclr_head(base_model, hidden_1=128, hidden_2=64):
     return simclr_model
 
 
-def simclr_train_model(model, dataset, optimizer, batch_size, temperature=1.0, epochs=100, verbose=0):
+def simclr_train_model(model, dataset, optimizer, batch_size, temperature=1.0, epochs=20, verbose=0):
     """
     Train a deep learning model using the SimCLR algorithm
 
@@ -86,24 +86,28 @@ def simclr_train_model(model, dataset, optimizer, batch_size, temperature=1.0, e
         shuffle_indices = np.arange(dataset.shape[0])
         np.random.shuffle(shuffle_indices)
         shuffled_dataset = dataset[shuffle_indices]
+        
+        print("before get_batched_dataset_generator, shuffled_dataset: ", type(shuffled_dataset[0][0][0]))
 
         # Make a batched dataset
         batched_dataset = get_batched_dataset_generator(shuffled_dataset, batch_size)
 
-        for data_batch in batched_dataset:
+        for n, data_batch in enumerate(batched_dataset):
             # Apply Data Augmentation
-            X_1, X_2 = data_aug_rotation(data_batch)
-
+            # X_1, X_2 = data_aug_rotation(data_batch)
+            # print("data_batch: ", data_batch.type())
+            X_1 = data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch))))
+            X_2 = data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch))))
             # Forward propagation
             loss, gradients = get_NT_Xent_loss_gradients(model, X_1, X_2, normalize=True, temperature=temperature, weights=1.0)
+            print(f"epoch {epoch}, batch {n}, loss = {loss}")
 
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
             step_wise_loss.append(loss)
-
         epoch_wise_loss.append(np.mean(step_wise_loss))
         
-        # if verbose > 0:
-        #     print("Epoch {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
+        if verbose > 0:
+            print("Epoch {} loss: {:.3f}".format(epoch + 1, np.mean(step_wise_loss)))
 
         if epoch%10==0:
             print("Epoch {} loss: {:.3f}".format(epoch, np.mean(step_wise_loss)))
@@ -153,6 +157,7 @@ def get_NT_Xent_loss_gradients(model, samples_transform_1, samples_transform_2, 
         loss = NT_Xent_loss(hidden_features_transform_1, hidden_features_transform_2, normalize=normalize, temperature=temperature, weights=weights)
 
     gradients = tape.gradient(loss, model.trainable_variables)
+    # gradients = tf.gradients(loss, model.trainable_variables)
     return loss, gradients
 
 
