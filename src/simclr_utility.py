@@ -1,5 +1,6 @@
 "Adapted from the code (https://github.com/iantangc/ContrastiveLearningHAR) contributed by iantangc"
 import numpy as np
+from scipy import signal
 import os
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -94,10 +95,11 @@ def simclr_train_model(model, dataset, optimizer, batch_size, temperature=1.0, e
 
         for n, data_batch in enumerate(batched_dataset):
             # Apply Data Augmentation
-            # X_1, X_2 = data_aug_rotation(data_batch)
-            # print("data_batch: ", data_batch.type())
-            X_1 = data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch))))
-            X_2 = data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch))))
+            # [batch, time, feature]
+            X_1 = np.float32(data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch)))))
+
+            X_2 = np.float32(data_aug_time_noise(data_aug_time_scaling(data_aug_time_warp(data_aug_time_rotation(data_batch)))))
+
             # Forward propagation
             loss, gradients = get_NT_Xent_loss_gradients(model, X_1, X_2, normalize=True, temperature=temperature, weights=1.0)
             print(f"epoch {epoch}, batch {n}, loss = {loss}")

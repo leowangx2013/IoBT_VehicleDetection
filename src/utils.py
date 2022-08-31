@@ -23,13 +23,15 @@ def normalize_data(X_train, X_train_labeled, X_val_labeled, X_test):
         X_val_labeled[i] = X_val_labeled[i]/m   
     return X_train, X_train_labeled, X_val_labeled, X_test
 
-def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, batch_size=512, Epoch=500):
+def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, sample_len=256, batch_size=512, Epoch=500):
+
     '''
     Train the model under the supervised way.
     First build the whole model -- encoder + classifer layers.
     Then train the model from very beginning.
     '''
-    encoder = model_LSTM(classes=9)
+    encoder = model_LSTM_frequency(input_shape=[sample_len, 5])
+    # encoder = model_vanilla()
     inputs = encoder.inputs
 
     dr=0.3
@@ -58,11 +60,69 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
                     tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='auto'),           
                     ]
                         )
+    
+    print("Best val accuracy: ", max(history.history['val_accuracy']))
+    sup_model.save("./saved_models/weight_supmodel.hdf5")
 
     print("=========== Supervised Training Completed! ==========")
     print("Save model to \'saved_models/weight_sup.hdf5\'")
 
     return sup_model
+
+def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
+    sup_model = tf.keras.models.load_model("./saved_models/weight_supmodel.hdf5")
+
+    runs = []
+    filenames = []
+    with open(f"val_file_sample_count_{sample_len}.txt", "r") as file:
+        for line in file:
+            segments = line.split(", ")
+            filenames.append(segments[0])
+            sample_n = int(segments[-1])
+            runs.append(sample_n)
+    runs = np.cumsum(runs)
+    
+    correctness = 0
+    incorrectness = 0
+    
+    correctness_by_runs = np.zeros(len(runs))
+    incorrectness_by_runs = np.zeros(len(runs))
+
+    for i in range(len(runs)-1):
+        if i == 0:
+            X_val_labeled_single_run = X_val_labeled[0: runs[i]]
+            Y_val_labeled_single_run = Y_val_labeled[0: runs[i]]
+        else:
+            X_val_labeled_single_run = X_val_labeled[runs[i]: runs[i+1]]
+            Y_val_labeled_single_run = Y_val_labeled[runs[i]: runs[i+1]]
+        
+        # n_sample = 1024 // sample_len
+        n_sample = 80
+        
+        j = 0
+        while j+n_sample <= len(X_val_labeled_single_run):
+            prediction = sup_model(X_val_labeled_single_run[j: j+n_sample])
+            prediction = tf.one_hot(tf.math.argmax(prediction, axis=-1), depth=9)
+            # print("prediction: ", prediction)
+            # print("labels: ", Y_val_labeled_single_run[j: j+n_sample])
+            sample_correctness = 0
+            for p, label in zip(prediction, Y_val_labeled_single_run[j: j+n_sample]):
+                # if i == 20:
+                #     print("pred: ", tf.math.argmax(p, axis=-1), ", true: ", tf.math.argmax(label, axis=-1))
+                if np.all(tf.math.equal(p, label).numpy()):
+                    sample_correctness += 1
+            if sample_correctness > n_sample // 2:
+                correctness += 1
+                correctness_by_runs[i] += 1
+            else:
+                incorrectness += 1
+                incorrectness_by_runs[i] += 1
+            j += n_sample
+
+    print(f"Correctness = {correctness}, incorrectness = {incorrectness}, accuracy = {correctness / (correctness + incorrectness)}")
+    print("Accuracy by runs: \n")
+    for n, (cor, incor, fn) in enumerate(zip(correctness_by_runs, incorrectness_by_runs, filenames)):
+        print(n, fn, cor/(cor+incor))
 
 def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, batch_size=512, Epoch=200):
     '''
@@ -78,7 +138,7 @@ def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, b
     sim_model = tf.keras.models.load_model("./saved_models/weight_simclr.hdf5")
     
     inputs = sim_model.inputs
-    x = sim_model.layers[-6].output
+    x = sim_model.layers[-1].output
 
     dr=0.3
     r=1e-4
@@ -102,6 +162,8 @@ def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, b
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
     tune_model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
+    
+    
     training_history = tune_model.fit(
         x = X_train_labeled,
         y = Y_train_labeled,
@@ -133,7 +195,8 @@ def train_simclr(X_train, batch_size=512, Epoch=100, temperature = 0.1):
     lr_decayed_fn = tf.keras.experimental.CosineDecay(initial_learning_rate=0.001, decay_steps=decay_steps)
     optimizer = tf.keras.optimizers.SGD(lr_decayed_fn)
 
-    base_model = model_LSTM(classes=9)
+    # base_model = model_LSTM_frequency()
+    base_model = model_vanilla()
     sim_model = attach_simclr_head(base_model)
     sim_model.summary()
     trained_simclr_model, epoch_losses = simclr_train_model(sim_model, X_train, optimizer, batch_size, temperature=temperature, epochs=Epoch, verbose=1)
