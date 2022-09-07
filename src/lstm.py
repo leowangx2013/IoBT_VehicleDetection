@@ -62,7 +62,7 @@ def model_LSTM_frequency(input_shape=[256, 5]):
 
 def model_LSTM_frequency(input_shape=[256, 5]):
     dr=0.3
-    r=1e-2
+    r=1e-3
     input = Input(input_shape, name='concat_input')
     
     x = tf.transpose(input, (0, 2, 1))

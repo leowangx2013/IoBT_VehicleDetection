@@ -1,4 +1,6 @@
 import numpy as np
+import seaborn as sn
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 from src.lstm import *
@@ -6,6 +8,7 @@ from src.lstm import *
 from src.simclr_utility import *
 from src.data_aug import *
 from tensorflow.keras.layers import Dense,Dropout
+from sklearn.metrics import confusion_matrix
 
 def normalize_data(X_train, X_train_labeled, X_val_labeled, X_test):
     # Normalize the data
@@ -55,14 +58,13 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
         verbose=2,
         validation_data=(X_val_labeled,Y_val_labeled),
         callbacks = [
-                    tf.keras.callbacks.ModelCheckpoint("./saved_models/weight_sup.hdf5", monitor='val_loss', verbose=1, save_best_only=True, mode='auto'),
+                    tf.keras.callbacks.ModelCheckpoint("./saved_models/weight_sup.hdf5", monitor='val_accuracy', verbose=1, save_best_only=True, mode='auto'),
                     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=0.8,verbose=1,patince=5,min_lr=0.0000001),
                     tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='auto'),           
                     ]
                         )
     
     print("Best val accuracy: ", max(history.history['val_accuracy']))
-    sup_model.save("./saved_models/weight_supmodel.hdf5")
 
     print("=========== Supervised Training Completed! ==========")
     print("Save model to \'saved_models/weight_sup.hdf5\'")
@@ -70,7 +72,7 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     return sup_model
 
 def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
-    sup_model = tf.keras.models.load_model("./saved_models/weight_supmodel.hdf5")
+    sup_model = tf.keras.models.load_model("./saved_models/weight_sup.hdf5")
 
     runs = []
     filenames = []
@@ -88,6 +90,9 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
     correctness_by_runs = np.zeros(len(runs))
     incorrectness_by_runs = np.zeros(len(runs))
 
+    y_pred = []
+    y_true = []
+
     for i in range(len(runs)-1):
         if i == 0:
             X_val_labeled_single_run = X_val_labeled[0: runs[i]]
@@ -97,11 +102,19 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
             Y_val_labeled_single_run = Y_val_labeled[runs[i]: runs[i+1]]
         
         # n_sample = 1024 // sample_len
-        n_sample = 80
+        n_sample = 1
         
         j = 0
         while j+n_sample <= len(X_val_labeled_single_run):
             prediction = sup_model(X_val_labeled_single_run[j: j+n_sample])
+            
+            pred = tf.math.argmax(prediction, axis=-1).numpy().tolist()
+            # print("prediction: ", prediction, ", pred: ", pred)
+            y_pred.append(max(set(pred), key=pred.count))
+
+            true = tf.math.argmax(Y_val_labeled_single_run, axis=-1).numpy().tolist()
+            y_true.append(max(set(true), key=true.count))
+
             prediction = tf.one_hot(tf.math.argmax(prediction, axis=-1), depth=9)
             # print("prediction: ", prediction)
             # print("labels: ", Y_val_labeled_single_run[j: j+n_sample])
@@ -118,6 +131,15 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
                 incorrectness += 1
                 incorrectness_by_runs[i] += 1
             j += n_sample
+
+    con_mat = confusion_matrix(y_true, y_pred)
+    con_mat = con_mat / con_mat.sum(axis=1, keepdims=True)
+    df_cm = pd.DataFrame(con_mat, range(9), range(9))
+    plt.figure(figsize=(10,7))
+    plt.title(f"Window Size = {n_sample}, Overall Accuracy = {correctness / (correctness + incorrectness)}")
+    s = sn.heatmap(df_cm, annot=True)
+    s.set(xlabel='Prediction', ylabel='True Label')
+    plt.savefig(f"./n_win={n_sample}.png")
 
     print(f"Correctness = {correctness}, incorrectness = {incorrectness}, accuracy = {correctness / (correctness + incorrectness)}")
     print("Accuracy by runs: \n")
@@ -155,7 +177,7 @@ def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, b
 
     # We can choose # of layers to be tuned according to the amount of labeled training data we have.
     # We tune less layers when we have a smaller number of labeled data.
-    for layer in tune_model.layers[-6:]:
+    for layer in tune_model.layers:
         layer.trainable = True
 
     tune_model.summary()
@@ -172,19 +194,21 @@ def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, b
         epochs=Epoch,
         verbose=2,
         callbacks = [
-                    tf.keras.callbacks.ModelCheckpoint("./saved_models/weight_tune.hdf5", monitor='val_loss', verbose=1, save_best_only=True, mode='auto'),
+                    tf.keras.callbacks.ModelCheckpoint("./saved_models/weight_tune.hdf5", monitor='val_accuracy', verbose=1, save_best_only=True, mode='auto'),
                     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=0.8,verbose=1,patince=5,min_lr=0.0000001),
                     tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='auto'),           
                     ],
         validation_data=(X_val_labeled,Y_val_labeled)
     )
 
+    print("Best val accuracy: ", max(training_history.history['val_accuracy']))
+
     print("=========== Tuning Completed! ==========")
     print("Save model to \'saved_models/weight_tune.hdf5\'")
 
     return tune_model
 
-def train_simclr(X_train, batch_size=512, Epoch=100, temperature = 0.1):
+def train_simclr(X_train, batch_size=512, Epoch=100, temperature = 0.1, input_shape=[256, 5]):
     '''
     We use simclr as the self-supervised model.
     This function would train the encoder under the given unlabeled data.
@@ -195,8 +219,8 @@ def train_simclr(X_train, batch_size=512, Epoch=100, temperature = 0.1):
     lr_decayed_fn = tf.keras.experimental.CosineDecay(initial_learning_rate=0.001, decay_steps=decay_steps)
     optimizer = tf.keras.optimizers.SGD(lr_decayed_fn)
 
-    # base_model = model_LSTM_frequency()
-    base_model = model_vanilla()
+    base_model = model_LSTM_frequency(input_shape=input_shape)
+    # base_model = model_vanilla()
     sim_model = attach_simclr_head(base_model)
     sim_model.summary()
     trained_simclr_model, epoch_losses = simclr_train_model(sim_model, X_train, optimizer, batch_size, temperature=temperature, epochs=Epoch, verbose=1)

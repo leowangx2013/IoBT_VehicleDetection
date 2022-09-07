@@ -68,17 +68,17 @@ X_train, Y_train, X_val, Y_val, X_test, Y_test = load_data(filepath, sample_len=
 # ### Train Contrastive Learning Model - Simclr
 
 # SimLCR
-sim_model, epoch_losses = train_simclr(X_train, batch_size=512, Epoch=100, temperature=0.1)
-plot_epoch_loss()
+# sim_model, epoch_losses = train_simclr(X_train, batch_size=512, Epoch=100, temperature=0.1, input_shape=[SAMPLE_LEN, 5])
+# plot_epoch_loss()
 
 # ### Build a classifier on the output of the encoder and tune the parameter of the encoder with labeled data
 
 # Tune Model
-tune_model = train_tune(X_train, Y_train, X_val, Y_val)
+# tune_model = train_tune(X_train, Y_train, X_val, Y_val)
 
 
 # ### Train the encoder + classifier from the very beginning under supervised way
-sup_model = train_supervised(X_train, Y_train, X_val, Y_val, sample_len=SAMPLE_LEN)
+# sup_model = train_supervised(X_train, Y_train, X_val, Y_val, sample_len=SAMPLE_LEN)
 
 eval_supervised(X_val, Y_val, sample_len=SAMPLE_LEN)
 exit()
