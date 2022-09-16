@@ -83,7 +83,7 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
             sample_n = int(segments[-1])
             runs.append(sample_n)
     runs = np.cumsum(runs)
-    
+
     correctness = 0
     incorrectness = 0
     
@@ -93,13 +93,13 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
     y_pred = []
     y_true = []
 
-    for i in range(len(runs)-1):
+    for i in range(len(runs)):
         if i == 0:
             X_val_labeled_single_run = X_val_labeled[0: runs[i]]
             Y_val_labeled_single_run = Y_val_labeled[0: runs[i]]
         else:
-            X_val_labeled_single_run = X_val_labeled[runs[i]: runs[i+1]]
-            Y_val_labeled_single_run = Y_val_labeled[runs[i]: runs[i+1]]
+            X_val_labeled_single_run = X_val_labeled[runs[i-1]: runs[i]]
+            Y_val_labeled_single_run = Y_val_labeled[runs[i-1]: runs[i]]
         
         # n_sample = 1024 // sample_len
         n_sample = 1
@@ -107,13 +107,15 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
         j = 0
         while j+n_sample <= len(X_val_labeled_single_run):
             prediction = sup_model(X_val_labeled_single_run[j: j+n_sample])
-            
             pred = tf.math.argmax(prediction, axis=-1).numpy().tolist()
-            # print("prediction: ", prediction, ", pred: ", pred)
+
+            # print("prediction: ", prediction, ", pred: ", pred, ", y_pred: ", max(set(pred), key=pred.count))
             y_pred.append(max(set(pred), key=pred.count))
 
-            true = tf.math.argmax(Y_val_labeled_single_run, axis=-1).numpy().tolist()
+            true = tf.math.argmax(Y_val_labeled_single_run[j: j+n_sample], axis=-1).numpy().tolist()
             y_true.append(max(set(true), key=true.count))
+
+            # print(filenames[i], pred, true)
 
             prediction = tf.one_hot(tf.math.argmax(prediction, axis=-1), depth=9)
             # print("prediction: ", prediction)
@@ -144,7 +146,7 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
     print(f"Correctness = {correctness}, incorrectness = {incorrectness}, accuracy = {correctness / (correctness + incorrectness)}")
     print("Accuracy by runs: \n")
     for n, (cor, incor, fn) in enumerate(zip(correctness_by_runs, incorrectness_by_runs, filenames)):
-        print(n, fn, cor/(cor+incor))
+        print(n, fn, cor, incor, cor/(cor+incor))
 
 def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, batch_size=512, Epoch=200):
     '''
