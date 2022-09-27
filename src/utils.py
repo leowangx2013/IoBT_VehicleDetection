@@ -115,15 +115,11 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
             true = tf.math.argmax(Y_val_labeled_single_run[j: j+n_sample], axis=-1).numpy().tolist()
             y_true.append(max(set(true), key=true.count))
 
-            # print(filenames[i], pred, true)
 
             prediction = tf.one_hot(tf.math.argmax(prediction, axis=-1), depth=9)
-            # print("prediction: ", prediction)
-            # print("labels: ", Y_val_labeled_single_run[j: j+n_sample])
+
             sample_correctness = 0
             for p, label in zip(prediction, Y_val_labeled_single_run[j: j+n_sample]):
-                # if i == 20:
-                #     print("pred: ", tf.math.argmax(p, axis=-1), ", true: ", tf.math.argmax(label, axis=-1))
                 if np.all(tf.math.equal(p, label).numpy()):
                     sample_correctness += 1
             if sample_correctness > n_sample // 2:

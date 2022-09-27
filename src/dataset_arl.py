@@ -12,8 +12,7 @@ def load_X(filename, sample_len=256):
             sample = [np.float32(i) for i in line]
             sample = np.reshape(sample, [5, sample_len])
             sample = np.transpose(sample, (1, 0)) # [batch, time, feature]
-            # _, _, sample = signal.stft(sample, fs=512, nperseg=32)
-            # sample = np.abs(np.transpose(sample, (2, 1, 0))) # [time, freq]
+
             data.append(sample)
     return data
 
@@ -28,13 +27,6 @@ def load_Y(filename):
 
 def load_data(filepath, sample_len=256):
     '''
-    RadioML2016.10a: (220000,2,128), mods*snr*1000, total 220000 samples
-
-    There are 1000 samples per snr for each modulation type, we use 750 as training set, 250 as validation set,
-    and 250 as testing set. We use all data in the training and validation set (without label) to do the 
-    contrastive learning. Then, among the training and validation sets, we choose 'size_train_labeled' and 
-    'size_val_labeled' data samples as labeled to tune the classifier. 
-
     Input: 
         filename: path of dataset
         size_train_labeled: [0,1000], # of labeled training samples
@@ -82,10 +74,3 @@ def load_data(filepath, sample_len=256):
     print("Y_test.shape: ", np.array(Y_test).shape)
 
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
-
-
-# def main():
-#     load_data("/home/tianshi/SemiAMC/data/Tank_classification/Tank_classification/Code/data/split_run")
-    
-# if __name__ == "__main__":
-#     main()
