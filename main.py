@@ -31,6 +31,9 @@ SAMPLE_LEN = 1024
 
 # Read dataset
 filepath = "./data/Tank_classification/Tank_classification/Code/data/split_run"
+# filepath = "./data/original/original"
+# filepath="./data/switch_label_3/switch_label_3"
+
 X_train, Y_train, X_val, Y_val, X_test, Y_test = load_data(filepath, sample_len=SAMPLE_LEN)
 
 # ### Train Contrastive Learning Model - Simclr

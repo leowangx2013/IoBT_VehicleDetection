@@ -2,6 +2,8 @@ import os
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input,Conv1D,Conv2D,LSTM,Dense
+from src.feature_extractors_arl import *
+import tensorflow_probability as tfp
 
 # The structure of the encoder
 def model_LSTM(input_shape1=[256,5],classes=9):
@@ -27,11 +29,37 @@ def model_LSTM_frequency(input_shape=[256, 5]):
     r=1e-3
     input = Input(input_shape, name='concat_input')
     
+    #input: <KerasTensor: shape=(None, 1024, 5) dtype=float32 (created by layer 'concat_input')>
     x = tf.transpose(input, (0, 2, 1))
+
+    """
+    # window energy
+    e = tf.reduce_sum(tf.square(x), axis=2, keepdims=True)
+    
+    # correlation
+    auto_correlation= tfp.stats.auto_correlation(
+    x[0,:,:],
+    axis=-1,
+    max_lags=None,
+    center=True,
+    normalize=True,
+    name='auto_correlation')
+    
+    # correlation of windows with each other in x
+    corr = tfp.stats.correlation(x, x, sample_axis=0, event_axis=None)
+
+    # windowed_mean 
+    """
+
     x = tf.signal.stft(x, frame_length=256, frame_step=64, fft_length=256)
+
+    x =mfcc(x) # try mfcc run
+    # x: <KerasTensor: shape=(None, 5, 13, 129) dtype=complex64 (created by layer 'tf.signal.stft')>
     x = tf.transpose(x, (0, 2, 3, 1))
-        
+    """
+    # x = <KerasTensor: shape=(None, 13, 129, 5) dtype=complex64 (created by layer 'tf.compat.v1.transpose_1')>
     x = tf.concat([tf.math.real(x), tf.math.imag(x)], axis=-1)
+    # x = <KerasTensor: shape=(None, 13, 129, 10) dtype=float32 (created by layer 'tf.concat')>
     x = tf.gather(x, indices=[0,2,4,6,8,1,3,5,7,9], axis=-1)
 
     x1, x2 = tf.split(x, [6, 4], axis=-1)
@@ -42,7 +70,7 @@ def model_LSTM_frequency(input_shape=[256, 5]):
     x2 = tf.keras.layers.Dropout(dr)(x2)
 
     x = tf.concat([x1, x2], axis=-1)
-
+    """
     x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(x)
     x = tf.keras.layers.Dropout(dr)(x)
     x = tf.reshape(x, (-1, x.shape[1], x.shape[2]*x.shape[3]))
