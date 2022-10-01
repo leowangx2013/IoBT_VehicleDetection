@@ -9,3 +9,5 @@ tqdm
 sklearn
 statsmodels
 tensorflow_probability
+wandb
+pillow

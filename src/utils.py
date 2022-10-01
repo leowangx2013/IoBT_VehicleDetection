@@ -9,6 +9,8 @@ from src.simclr_utility import *
 from src.data_aug import *
 from tensorflow.keras.layers import Dense,Dropout
 from sklearn.metrics import confusion_matrix
+import wandb
+from wandb.keras import WandbCallback
 
 def normalize_data(X_train, X_train_labeled, X_val_labeled, X_test):
     # Normalize the data
@@ -51,6 +53,11 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     sup_model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
     sup_model.summary()
 
+    wandb.config = {
+        "learning_rate": r,
+        "epochs": Epoch,
+        "batch_size": batch_size,}
+
     history = sup_model.fit(X_train_labeled,
         Y_train_labeled,
         batch_size=batch_size,
@@ -60,7 +67,8 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
         callbacks = [
                     tf.keras.callbacks.ModelCheckpoint("./saved_models/weight_sup.hdf5", monitor='val_accuracy', verbose=1, save_best_only=True, mode='auto'),
                     tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=0.8,verbose=1,patince=5,min_lr=0.0000001),
-                    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='auto'),           
+                    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=1, mode='auto'),
+                    WandbCallback()           
                     ]
                         )
     
@@ -138,11 +146,20 @@ def eval_supervised(X_val_labeled, Y_val_labeled, sample_len=256):
     s = sn.heatmap(df_cm, annot=True)
     s.set(xlabel='Prediction', ylabel='True Label')
     plt.savefig(f"./n_win={n_sample}.png")
+    wandb.log({"Confusion Matrix": wandb.Image(f"./n_win={n_sample}.png")})
+    
 
     print(f"Correctness = {correctness}, incorrectness = {incorrectness}, accuracy = {correctness / (correctness + incorrectness)}")
+    wandb.log({"Accuracy": correctness / (correctness + incorrectness),
+                "Correctness": correctness,
+                "Incorrectness": incorrectness})
+
     print("Accuracy by runs: \n")
     for n, (cor, incor, fn) in enumerate(zip(correctness_by_runs, incorrectness_by_runs, filenames)):
         print(n, fn, cor, incor, cor/(cor+incor))
+        wandb.log({f"Accuracy by runs {fn}": cor/(cor+incor),
+                    f"Correctness by runs {fn}": cor,
+                    f"Incorrectness by runs {fn}": incor})
 
 def train_tune(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labeled, batch_size=512, Epoch=200):
     '''
