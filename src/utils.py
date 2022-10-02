@@ -43,7 +43,7 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     r=1e-4
     x = encoder.output
     x=Dropout(dr)(x)
-    x=Dense(128,activation="selu",name="FC1",kernel_regularizer=tf.keras.regularizers.l2(l=r))(x)
+    x=Dense(256,activation="selu",name="FC1",kernel_regularizer=tf.keras.regularizers.l2(l=r))(x)
     x=Dropout(dr)(x)
 
     outputs = Dense(9, activation="softmax", name="linear_Classifier")(x)

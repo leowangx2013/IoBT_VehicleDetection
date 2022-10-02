@@ -90,11 +90,12 @@ def model_LSTM_frequency(input_shape=[256, 5]):
 
     # x = spectrogram # only spectrogram + energy
 
-    # x =mfcc(x) # try mfcc run
+    mfcc_x =mfcc(x) # try mfcc run
     # x: <KerasTensor: shape=(None, 5, 13, 129) dtype=complex64 (created by layer 'tf.signal.stft')>
     
     x = tf.transpose(x, (0, 2, 3, 1))
-    
+    mfcc_x = tf.transpose(mfcc_x, (0, 2, 3, 1)) # add for mfcc_x
+
     # x = <KerasTensor: shape=(None, 13, 129, 5) dtype=complex64 (created by layer 'tf.compat.v1.transpose_1')>
     x = tf.concat([tf.math.real(x), tf.math.imag(x)], axis=-1)
     # x = <KerasTensor: shape=(None, 13, 129, 10) dtype=float32 (created by layer 'tf.concat')>
@@ -112,7 +113,14 @@ def model_LSTM_frequency(input_shape=[256, 5]):
     x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(x)
     x = tf.keras.layers.Dropout(dr)(x)
 
+    # mfcc_x conv
+    mfcc_x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(mfcc_x)
+    mfcc_x = tf.keras.layers.Dropout(dr)(mfcc_x)
+
+
     x = tf.reshape(x, (-1, x.shape[1], x.shape[2]*x.shape[3]))
+    # mfcc_x reshape
+    mfcc_x = tf.reshape(mfcc_x, (-1, mfcc_x.shape[1], mfcc_x.shape[2]*mfcc_x.shape[3]))
     
     
     x = LSTM(units=128,return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(l=r),name="fusion_LSTM1",)(x)
@@ -122,9 +130,20 @@ def model_LSTM_frequency(input_shape=[256, 5]):
 
     x = tf.keras.layers.GlobalMaxPool1D(data_format='channels_last', name='global_max_pooling1d')(x)
 
+    # mfcc_x LSTM
+    mfcc_x = LSTM(units=128,return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(l=r),name="fusion_LSTM3",)(mfcc_x)
+    mfcc_x = tf.keras.layers.Dropout(dr)(mfcc_x)
+    mfcc_x = LSTM(units=128,return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(l=r),name="fusion_LSTM4")(mfcc_x)
+    mfcc_x = tf.keras.layers.Dropout(dr)(mfcc_x)
+
+    mfcc_x = tf.keras.layers.GlobalMaxPool1D(data_format='channels_last', name='global_max_pooling1d_mfcc')(mfcc_x)
+
     # add average energy
     # e = tf.keras.layers.GlobalAveragePooling1D(data_format='channels_last', name='global_average_pooling_1D')(e)
     # x = tf.concat([x, e], axis=-1)
+    
+    # add mfcc_x and stft
+    x = tf.concat([x, mfcc_x], axis=-1)
 
     model=Model(inputs=input,outputs=x)
     
