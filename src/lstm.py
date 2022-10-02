@@ -24,6 +24,38 @@ def model_LSTM(input_shape1=[256,5],classes=9):
     
     return model
 
+def processSpectrogram(x):
+    # Takes in stfts
+    dr=0.3
+    r=1e-3
+    
+    x = tf.abs(x)
+
+    x = tf.transpose(x, (0, 2, 3, 1))
+    x1, x2 = tf.split(x, [3, 2], axis=-1)
+
+    x1 = Conv2D(64, 3, padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=r) , name='acoustic_conv')(x1) # [batch, time, freq, feature]
+    x1 = tf.keras.layers.Dropout(dr)(x1)
+    x2 = Conv2D(64, 3, padding='same', activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=r), name='seismic_conv')(x2)
+    x2 = tf.keras.layers.Dropout(dr)(x2)
+
+    x = tf.concat([x1, x2], axis=-1)
+    x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(x)
+    x = tf.keras.layers.Dropout(dr)(x)
+
+    return x
+
+def processMFCC(x):
+    # Takes in stfts
+    dr=0.3
+    r=1e-3
+    
+    x =mfcc(x) # try mfcc run
+    x = tf.transpose(x, (0, 2, 3, 1))
+    x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(x)
+    x = tf.keras.layers.Dropout(dr)(x)
+    return x
+
 def model_LSTM_frequency(input_shape=[256, 5]):
     dr=0.3
     r=1e-3
@@ -32,10 +64,10 @@ def model_LSTM_frequency(input_shape=[256, 5]):
     #input: <KerasTensor: shape=(None, 1024, 5) dtype=float32 (created by layer 'concat_input')>
     x = tf.transpose(input, (0, 2, 1))
 
-    """
+
     # window energy
-    e = tf.reduce_sum(tf.square(x), axis=2, keepdims=True)
-    
+    # e = tf.reduce_sum(tf.square(x), axis=2, keepdims=True)
+    """
     # correlation
     auto_correlation= tfp.stats.auto_correlation(
     x[0,:,:],
@@ -53,10 +85,16 @@ def model_LSTM_frequency(input_shape=[256, 5]):
 
     x = tf.signal.stft(x, frame_length=256, frame_step=64, fft_length=256)
 
-    x =mfcc(x) # try mfcc run
+    # spectrogram = processSpectrogram(x)
+    # mfcc = processMFCC(x)
+
+    # x = spectrogram # only spectrogram + energy
+
+    # x =mfcc(x) # try mfcc run
     # x: <KerasTensor: shape=(None, 5, 13, 129) dtype=complex64 (created by layer 'tf.signal.stft')>
+    
     x = tf.transpose(x, (0, 2, 3, 1))
-    """
+    
     # x = <KerasTensor: shape=(None, 13, 129, 5) dtype=complex64 (created by layer 'tf.compat.v1.transpose_1')>
     x = tf.concat([tf.math.real(x), tf.math.imag(x)], axis=-1)
     # x = <KerasTensor: shape=(None, 13, 129, 10) dtype=float32 (created by layer 'tf.concat')>
@@ -70,17 +108,23 @@ def model_LSTM_frequency(input_shape=[256, 5]):
     x2 = tf.keras.layers.Dropout(dr)(x2)
 
     x = tf.concat([x1, x2], axis=-1)
-    """
+    
     x = Conv2D(64, 3, padding='same', kernel_regularizer=tf.keras.regularizers.l2(l=r), activation='relu')(x)
     x = tf.keras.layers.Dropout(dr)(x)
-    x = tf.reshape(x, (-1, x.shape[1], x.shape[2]*x.shape[3]))
 
+    x = tf.reshape(x, (-1, x.shape[1], x.shape[2]*x.shape[3]))
+    
+    
     x = LSTM(units=128,return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(l=r),name="fusion_LSTM1",)(x)
     x = tf.keras.layers.Dropout(dr)(x)
     x = LSTM(units=128,return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(l=r),name="fusion_LSTM2")(x)
     x = tf.keras.layers.Dropout(dr)(x)
 
     x = tf.keras.layers.GlobalMaxPool1D(data_format='channels_last', name='global_max_pooling1d')(x)
+
+    # add average energy
+    # e = tf.keras.layers.GlobalAveragePooling1D(data_format='channels_last', name='global_average_pooling_1D')(e)
+    # x = tf.concat([x, e], axis=-1)
 
     model=Model(inputs=input,outputs=x)
     

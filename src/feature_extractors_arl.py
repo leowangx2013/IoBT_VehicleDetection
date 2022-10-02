@@ -14,7 +14,7 @@ def mfcc(stfts):
 
     # Warp the linear scale spectrograms into the mel-scale.
     num_spectrogram_bins = stfts.shape[-1]# .value
-    lower_edge_hertz, upper_edge_hertz, num_mel_bins = 10.0, 450.0, 150
+    lower_edge_hertz, upper_edge_hertz, num_mel_bins = 10.0, 250.0, 80
     linear_to_mel_weight_matrix = tf.signal.linear_to_mel_weight_matrix(
     num_mel_bins, num_spectrogram_bins, sample_rate, lower_edge_hertz,
     upper_edge_hertz)

@@ -1,0 +1,299 @@
+#### 20 early stop, 40 features
+[0]     validation_0-mlogloss:1.31249   validation_1-mlogloss:1.80500
+[1]     validation_0-mlogloss:0.94758   validation_1-mlogloss:1.64066
+[2]     validation_0-mlogloss:0.73201   validation_1-mlogloss:1.51950
+[3]     validation_0-mlogloss:0.57216   validation_1-mlogloss:1.44284
+[4]     validation_0-mlogloss:0.45207   validation_1-mlogloss:1.38684
+[5]     validation_0-mlogloss:0.36388   validation_1-mlogloss:1.34185
+[6]     validation_0-mlogloss:0.29293   validation_1-mlogloss:1.30150
+[7]     validation_0-mlogloss:0.23361   validation_1-mlogloss:1.26184
+[8]     validation_0-mlogloss:0.18611   validation_1-mlogloss:1.23768
+[9]     validation_0-mlogloss:0.15047   validation_1-mlogloss:1.21994
+[10]    validation_0-mlogloss:0.12331   validation_1-mlogloss:1.21336
+[11]    validation_0-mlogloss:0.10202   validation_1-mlogloss:1.20792
+[12]    validation_0-mlogloss:0.08347   validation_1-mlogloss:1.20772
+[13]    validation_0-mlogloss:0.06937   validation_1-mlogloss:1.21265
+[14]    validation_0-mlogloss:0.05897   validation_1-mlogloss:1.20977
+[15]    validation_0-mlogloss:0.04952   validation_1-mlogloss:1.21465
+[16]    validation_0-mlogloss:0.04166   validation_1-mlogloss:1.21783
+[17]    validation_0-mlogloss:0.03528   validation_1-mlogloss:1.21915
+[18]    validation_0-mlogloss:0.03037   validation_1-mlogloss:1.23206
+[19]    validation_0-mlogloss:0.02579   validation_1-mlogloss:1.23609
+[20]    validation_0-mlogloss:0.02210   validation_1-mlogloss:1.23473
+[21]    validation_0-mlogloss:0.01946   validation_1-mlogloss:1.24884
+[22]    validation_0-mlogloss:0.01673   validation_1-mlogloss:1.25403
+[23]    validation_0-mlogloss:0.01464   validation_1-mlogloss:1.26172
+[24]    validation_0-mlogloss:0.01288   validation_1-mlogloss:1.26420
+[25]    validation_0-mlogloss:0.01131   validation_1-mlogloss:1.27361
+[26]    validation_0-mlogloss:0.01016   validation_1-mlogloss:1.29435
+[27]    validation_0-mlogloss:0.00908   validation_1-mlogloss:1.29727
+[28]    validation_0-mlogloss:0.00815   validation_1-mlogloss:1.30335
+[29]    validation_0-mlogloss:0.00735   validation_1-mlogloss:1.31654
+[30]    validation_0-mlogloss:0.00665   validation_1-mlogloss:1.32428
+[31]    validation_0-mlogloss:0.00608   validation_1-mlogloss:1.33294
+[[2653  916]
+  [ 157 1064]]
+
+ [[4097   83]
+  [ 556   54]]
+
+ [[4562    0]
+  [  83  145]]
+
+ [[4202   68]
+  [ 112  408]]
+
+ [[3620  423]
+  [  70  677]]
+
+ [[4466  116]
+  [ 120   88]]
+
+ [[4509   17]
+  [ 216   48]]
+
+ [[3838  147]
+  [ 330  475]]
+
+ [[4591   12]
+  [ 138   49]]]
+Accuracy: 0.628
+Precision: 0.628
+Recall: 0.628
+F1-Score: 0.628
+
+
+###### Second basic: 48 features and 5&10&20 early stop
+
+0]     validation_0-mlogloss:1.28849   validation_1-mlogloss:1.81551
+[1]     validation_0-mlogloss:0.94687   validation_1-mlogloss:1.65343
+[2]     validation_0-mlogloss:0.72428   validation_1-mlogloss:1.54026
+[3]     validation_0-mlogloss:0.56169   validation_1-mlogloss:1.47126
+[4]     validation_0-mlogloss:0.44455   validation_1-mlogloss:1.40761
+[5]     validation_0-mlogloss:0.35552   validation_1-mlogloss:1.36310
+[6]     validation_0-mlogloss:0.28268   validation_1-mlogloss:1.32411
+[7]     validation_0-mlogloss:0.22697   validation_1-mlogloss:1.29668
+[8]     validation_0-mlogloss:0.18397   validation_1-mlogloss:1.28029
+[9]     validation_0-mlogloss:0.14720   validation_1-mlogloss:1.26730
+[10]    validation_0-mlogloss:0.11961   validation_1-mlogloss:1.25587
+[11]    validation_0-mlogloss:0.09753   validation_1-mlogloss:1.25597
+[12]    validation_0-mlogloss:0.07957   validation_1-mlogloss:1.25412
+[13]    validation_0-mlogloss:0.06608   validation_1-mlogloss:1.24998
+[14]    validation_0-mlogloss:0.05433   validation_1-mlogloss:1.24940
+[15]    validation_0-mlogloss:0.04465   validation_1-mlogloss:1.24970
+[16]    validation_0-mlogloss:0.03768   validation_1-mlogloss:1.24461
+[17]    validation_0-mlogloss:0.03196   validation_1-mlogloss:1.24039
+[18]    validation_0-mlogloss:0.02695   validation_1-mlogloss:1.25192
+[19]    validation_0-mlogloss:0.02296   validation_1-mlogloss:1.25972
+[20]    validation_0-mlogloss:0.01965   validation_1-mlogloss:1.26545
+[21]    validation_0-mlogloss:0.01694   validation_1-mlogloss:1.26364
+[22]    validation_0-mlogloss:0.01494   validation_1-mlogloss:1.26299
+[23]    validation_0-mlogloss:0.01297   validation_1-mlogloss:1.27063
+[24]    validation_0-mlogloss:0.01143   validation_1-mlogloss:1.27721
+[25]    validation_0-mlogloss:0.01000   validation_1-mlogloss:1.28189
+[26]    validation_0-mlogloss:0.00897   validation_1-mlogloss:1.29377
+[[[2601  968]
+  [ 149 1072]]
+
+ [[4120   60]
+  [ 545   65]]
+
+ [[4545   17]
+  [  94  134]]
+
+ [[4207   63]
+  [ 108  412]]
+
+ [[3676  367]
+  [  65  682]]
+
+ [[4490   92]
+  [ 108  100]]
+
+ [[4517    9]
+  [ 244   20]]
+
+ [[3830  155]
+  [ 316  489]]
+
+ [[4586   17]
+  [ 119   68]]]
+Accuracy: 0.635
+Precision: 0.635
+Recall: 0.635
+F1-Score: 0.635
+
+#### all frequencies- 5 early stop
+
+
+[0]     validation_0-mlogloss:1.29979   validation_1-mlogloss:1.80909
+[1]     validation_0-mlogloss:0.95203   validation_1-mlogloss:1.66228
+[2]     validation_0-mlogloss:0.72332   validation_1-mlogloss:1.55167
+[3]     validation_0-mlogloss:0.56060   validation_1-mlogloss:1.48622
+[4]     validation_0-mlogloss:0.44517   validation_1-mlogloss:1.42460
+[5]     validation_0-mlogloss:0.35381   validation_1-mlogloss:1.38820
+[6]     validation_0-mlogloss:0.28340   validation_1-mlogloss:1.35220
+[7]     validation_0-mlogloss:0.22884   validation_1-mlogloss:1.31743
+[8]     validation_0-mlogloss:0.18281   validation_1-mlogloss:1.30278
+[9]     validation_0-mlogloss:0.14836   validation_1-mlogloss:1.28828
+[10]    validation_0-mlogloss:0.11964   validation_1-mlogloss:1.27806
+[11]    validation_0-mlogloss:0.09819   validation_1-mlogloss:1.27056
+[12]    validation_0-mlogloss:0.07992   validation_1-mlogloss:1.26187
+[13]    validation_0-mlogloss:0.06596   validation_1-mlogloss:1.25497
+[14]    validation_0-mlogloss:0.05423   validation_1-mlogloss:1.25385
+[15]    validation_0-mlogloss:0.04487   validation_1-mlogloss:1.25231
+[16]    validation_0-mlogloss:0.03756   validation_1-mlogloss:1.25754
+[17]    validation_0-mlogloss:0.03190   validation_1-mlogloss:1.25196
+[18]    validation_0-mlogloss:0.02706   validation_1-mlogloss:1.26152
+[19]    validation_0-mlogloss:0.02293   validation_1-mlogloss:1.26516
+[20]    validation_0-mlogloss:0.01963   validation_1-mlogloss:1.27813
+[21]    validation_0-mlogloss:0.01681   validation_1-mlogloss:1.28464
+[22]    validation_0-mlogloss:0.01456   validation_1-mlogloss:1.27730
+[[[2587  982]
+  [ 156 1065]]
+
+ [[4144   36]
+  [ 557   53]]
+
+ [[4538   24]
+  [  83  145]]
+
+ [[4182   88]
+  [  79  441]]
+
+ [[3705  338]
+  [  76  671]]
+
+ [[4494   88]
+  [ 119   89]]
+
+ [[4517    9]
+  [ 226   38]]
+
+ [[3816  169]
+  [ 337  468]]
+
+ [[4576   27]
+  [ 128   59]]]
+Accuracy: 0.632
+Precision: 0.632
+Recall: 0.632
+F1-Score: 0.632
+
+
+
+### nperseg=256 , faeturs 3/4, 5 early stop
+
+[[[2421 1148]
+  [ 167 1054]]
+
+ [[4142   38]
+  [ 571   39]]
+
+ [[4547   15]
+  [  52  176]]
+
+ [[4196   74]
+  [ 224  296]]
+
+ [[3746  297]
+  [  70  677]]
+
+ [[4448  134]
+  [ 115   93]]
+
+ [[4522    4]
+  [ 258    6]]
+
+ [[3790  195]
+  [ 327  478]]
+
+ [[4560   43]
+  [ 164   23]]]
+Accuracy: 0.593
+Precision: 0.593
+Recall: 0.593
+F1-Score: 0.593
+
+### features = 3/4, nperseg =64,early stop 5
+
+
+[0]     validation_0-mlogloss:1.31456   validation_1-mlogloss:1.76072
+[1]     validation_0-mlogloss:0.97670   validation_1-mlogloss:1.59135
+[2]     validation_0-mlogloss:0.75063   validation_1-mlogloss:1.48891
+[3]     validation_0-mlogloss:0.59380   validation_1-mlogloss:1.41892
+[4]     validation_0-mlogloss:0.47286   validation_1-mlogloss:1.37190
+[5]     validation_0-mlogloss:0.38399   validation_1-mlogloss:1.34319
+[6]     validation_0-mlogloss:0.31358   validation_1-mlogloss:1.32656
+[7]     validation_0-mlogloss:0.25708   validation_1-mlogloss:1.31266
+[8]     validation_0-mlogloss:0.21136   validation_1-mlogloss:1.30897
+[9]     validation_0-mlogloss:0.17491   validation_1-mlogloss:1.30571
+[10]    validation_0-mlogloss:0.14716   validation_1-mlogloss:1.30350
+[11]    validation_0-mlogloss:0.12381   validation_1-mlogloss:1.30925
+[12]    validation_0-mlogloss:0.10435   validation_1-mlogloss:1.31258
+[13]    validation_0-mlogloss:0.08930   validation_1-mlogloss:1.31721
+[14]    validation_0-mlogloss:0.07631   validation_1-mlogloss:1.32434
+[15]    validation_0-mlogloss:0.06570   validation_1-mlogloss:1.32615
+[[[2683  886]
+  [ 123 1098]]
+
+ [[4069  111]
+  [ 542   68]]
+
+ [[4556    6]
+  [  75  153]]
+
+ [[4201   69]
+  [ 214  306]]
+
+ [[3521  522]
+  [  56  691]]
+
+ [[4518   64]
+  [ 120   88]]
+
+ [[4526    0]
+  [ 264    0]]
+
+ [[3788  197]
+  [ 374  431]]
+
+ [[4541   62]
+  [ 149   38]]]
+Accuracy: 0.600
+Precision: 0.600
+Recall: 0.600
+F1-Score: 0.600
+
+
+## features 2/4 , nperseg=128
+[[[2567 1002]
+  [ 158 1063]]
+
+ [[4150   30]
+  [ 541   69]]
+
+ [[4537   25]
+  [  94  134]]
+
+ [[4203   67]
+  [ 107  413]]
+
+ [[3709  334]
+  [  73  674]]
+
+ [[4472  110]
+  [ 131   77]]
+
+ [[4506   20]
+  [ 209   55]]
+
+ [[3807  178]
+  [ 334  471]]
+
+ [[4586   17]
+  [ 136   51]]]
+Accuracy: 0.628
+Precision: 0.628
+Recall: 0.628
+F1-Score: 0.628
