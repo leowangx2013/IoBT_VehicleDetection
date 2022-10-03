@@ -2,3 +2,5 @@
 *.pyc
 logs/
 wandb/
+incas_data/
+time_data_partition/
