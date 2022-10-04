@@ -20,7 +20,7 @@ import os
 import torch
 import random
 import getpass
-
+import pickle as pkl
 import numpy as np
 
 from tqdm import tqdm
@@ -109,15 +109,20 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
     # Y_val = convertLabels(Y_val)
 
 
-    model = xgb.XGBClassifier(objective='multi:softprob', n_estimators=400)
+    # model = xgb.XGBClassifier(objective='multi:softprob', n_estimators=400)
+    model = xgb.XGBClassifier(objective='binary:logistic', n_estimators=400)
     model.fit(X_train, Y_train,
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
             early_stopping_rounds=20) 
-    
+    pkl.dump(model, open("model.pkl", "wb"))
     return model
     pass
 
 def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN):
+    
+    if not model:
+        model = pkl.load(open("model.pkl", "rb"))
+
     X_test = createFeatures(X_val_acoustic,X_val_seismic)
     # y_test = convertLabels(Y_val) +1
     y_test = Y_val
@@ -129,12 +134,12 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     print('Accuracy: %.3f' % accuracy)
     
     # find the sequence number of current window length
-    precision = precision_score(y_test, y_pred, average='micro')
+    precision = precision_score(y_test, y_pred, average='binary')
     print('Precision: %.3f' % precision)
-    recall = recall_score(y_test, y_pred, average='micro')
+    recall = recall_score(y_test, y_pred, average='binary')
     print('Recall: %.3f' % recall)
     
-    f_score = f1_score(y_test,y_pred,average='micro')
+    f_score = f1_score(y_test,y_pred,average='binary')
     print('F1-Score: %.3f' % f_score)
     
     ## better confusion matrix
@@ -200,7 +205,7 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     """
     con_mat = confusion_matrix(y_test, y_pred)
     con_mat = con_mat / con_mat.sum(axis=1, keepdims=True)
-    df_cm = pd.DataFrame(con_mat, range(8), range(8))
+    df_cm = pd.DataFrame(con_mat, range(len(set(y_test))), range(len(set(y_test))))
     plt.figure(figsize=(10,7))
     plt.title(f"Window Size = {1024}, Overall Accuracy = {accuracy}")
     s = sn.heatmap(df_cm, annot=True)
@@ -241,7 +246,16 @@ def load_data_humvee(filepath, sample_len=256):
                 sample = torch.load(os.path.join(filepath, file))
                 seismic= torch.flatten(sample['data']['shake']['seismic']).numpy()
                 acoustic = torch.flatten(sample['data']['shake']['audio']).numpy()
-                label = sample['label'].numpy()
+                
+                if True: # do 1vsrest with humvee
+                    if "humv" in file:
+                        label = np.array(1)
+                    else:
+                        label = np.array(0)
+                    pass
+                else:
+                    label = sample['label'].numpy()
+                
                 X_train_acoustic.append(acoustic)
                 X_train_seismic.append(seismic)
                 Y_train.append(label)
@@ -315,30 +329,7 @@ if __name__ == "__main__":
 
     X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
     sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
+    # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
+    sup_model=None # use saved model file
     eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
-
-    pass
-
-
-exit()
-# Read dataset
-filepath = "./data/Tank_classification/Tank_classification/Code/data/split_run"
-# filepath = "./data/original/original"
-# filepath="./data/switch_label_3/switch_label_3"
-
-X_train, Y_train, X_val, Y_val, X_test, Y_test = load_data(filepath, sample_len=SAMPLE_LEN)
-
-
-# ### Train the encoder + classifier from the very beginning under supervised way
-sup_model = train_supervised_basic(X_train, Y_train, X_val, Y_val, sample_len=SAMPLE_LEN)
-eval_supervised_basic(sup_model,X_val, Y_val, sample_len=SAMPLE_LEN)
-
-eval_supervised(X_val, Y_val, sample_len=SAMPLE_LEN)
-
-# ### Compare the result of our model and the supervised training results
-
-# weight_tune = "./saved_models/weight_tune.hdf5"
-# weight_sup = "./saved_models/weight_sup.hdf5"
-
-# compare_tune_and_sup(weight_tune, weight_sup, X_test, Y_test, test_idx, snrs, lbl)
-
+    # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
