@@ -2,5 +2,7 @@
 *.pyc
 logs/
 wandb/
+augmented_data/
 incas_data/
 time_data_partition/
+*.pkl
