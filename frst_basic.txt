@@ -297,3 +297,21 @@ Accuracy: 0.628
 Precision: 0.628
 Recall: 0.628
 F1-Score: 0.628
+
+
+
+
+#### Augmented first run
+[42]    validation_0-logloss:0.05733    validation_1-logloss:0.28702
+[43]    validation_0-logloss:0.05527    validation_1-logloss:0.28937
+[44]    validation_0-logloss:0.05337    validation_1-logloss:0.29104
+[[[ 4112  2426]
+  [  177 27166]]
+
+ [[27166   177]
+  [ 2426  4112]]]
+Accuracy: 0.923
+Precision: 0.959
+Recall: 0.629
+F1-Score: 0.760
+

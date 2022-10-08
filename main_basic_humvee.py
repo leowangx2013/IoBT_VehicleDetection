@@ -267,9 +267,9 @@ def load_data_humvee(filepath, sample_len=256):
 
     
     # preliminaries
-    train_index_file = "time_data_partition/train_index.txt"
-    val_index_file = "time_data_partition/val_index.txt"
-    test_index_file = "time_data_partition/test_index.txt"
+    train_index_file = "time_data_partition_old/train_index.txt"
+    val_index_file = "time_data_partition_old/val_index.txt"
+    test_index_file = "time_data_partition_old/test_index.txt"
     # sample_rate_acoustic = 8000
     # sample_rate_seismic = 100 
 

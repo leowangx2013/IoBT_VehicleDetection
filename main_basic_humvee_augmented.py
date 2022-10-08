@@ -246,7 +246,7 @@ def load_data_humvee(filepath, sample_len=256):
             case = os.path.splitext(training_case)[0]
             # find all files in filepath including case
             files = glob.glob(os.path.join(filepath, case + "*"))
-            
+            #TODO: see if the above "training_case" is needed or we can do it with the way of file
             for file in files:
                 try:
                     # sample = torch.load(os.path.join(filepath, file))
@@ -260,7 +260,9 @@ def load_data_humvee(filepath, sample_len=256):
                         acoustic = sample['data']['shake']['audio'].flatten()
 
                     if True: # do 1vsrest with humvee
-                        if "humv" in file:
+                        if "quiet" in file:
+                            label = np.array(0)
+                        elif "humv" in file:
                             label = np.array(1)
                         else:
                             label = np.array(0)
@@ -351,7 +353,21 @@ if __name__ == "__main__":
     # filepath = "incas_data"
     filepath= "augmented_data"
 
-    X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
+    if True:
+        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
+    else:
+        # read from csv
+        X_train_acoustic = pd.read_csv("X_train_acoustic.csv", index_col=0).to_numpy()
+        X_train_seismic = pd.read_csv("X_train_seismic.csv", index_col=0).to_numpy()
+        Y_train = pd.read_csv("Y_train.csv", index_col=0).to_numpy()
+        X_val_acoustic = pd.read_csv("X_val_acoustic.csv", index_col=0).to_numpy()
+        X_val_seismic = pd.read_csv("X_val_seismic.csv", index_col=0).to_numpy()
+        Y_val = pd.read_csv("Y_val.csv", index_col=0).to_numpy()
+        X_test_acoustic = pd.read_csv("X_test_acoustic.csv", index_col=0).to_numpy()
+        X_test_seismic = pd.read_csv("X_test_seismic.csv", index_col=0).to_numpy()
+        Y_test = pd.read_csv("Y_test.csv", index_col=0).to_numpy()
+
+
     sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
     # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
     sup_model=None # use saved model file
