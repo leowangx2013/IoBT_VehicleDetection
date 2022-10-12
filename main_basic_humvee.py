@@ -1,6 +1,7 @@
 from cProfile import label
 import os,random
 from tabnanny import verbose
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 import numpy as np
@@ -118,8 +119,9 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
     return model
     pass
 
-def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN):
-    
+def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN,files=None):
+    import time
+    print("Evaluating start time: ",time.time())
     if not model:
         model = pkl.load(open("model.pkl", "rb"))
 
@@ -127,6 +129,13 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     # y_test = convertLabels(Y_val) +1
     y_test = Y_val
     y_pred = model.predict(X_test)
+    print("Evaluating end time: ",time.time())
+    if files:
+        print(len(files))
+        #print files where prediction is wrong
+        for i in range(len(y_pred)):
+            if y_pred[i] != y_test[i]:
+                print(files[i])
     from sklearn.metrics import multilabel_confusion_matrix
 
     print(multilabel_confusion_matrix(y_test, y_pred))
@@ -323,13 +332,89 @@ def load_data_humvee(filepath, sample_len=256):
     print("X_test_seismic shape: ", X_test_seismic.shape)
     print("Y_test shape: ", Y_test.shape)
     return X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test
+
+
+def load_shake_data(filepath, sample_len=256):
+
+    def loaderHelper(filepath):
+        
+        # read all file names from filepath ending with .pt
+        files = []
+        for file in os.listdir(filepath):
+            if file.endswith(".pt"):
+                files.append(file)
+        
+        # read training data from filepath
+        X_train_acoustic = []
+        X_train_seismic = []
+        Y_train = []
+        for file in files:
+            try:
+                sample = torch.load(os.path.join(filepath, file))
+                seismic= torch.flatten(sample['data']['shake']['seismic']).numpy()
+                acoustic = torch.flatten(sample['data']['shake']['audio']).numpy()
+                
+                if False: # do 1vsrest with humvee
+                    if "humv" in file:
+                        label = np.array(1)
+                    else:
+                        label = np.array(0)
+                    pass
+                else:
+                    label = np.array(0) # 0 or 1 
+                
+                X_train_acoustic.append(acoustic)
+                X_train_seismic.append(seismic)
+                Y_train.append(label)
+            
+            except:
+                print("Error reading file: ", file)
+                continue
+        return X_train_acoustic, X_train_seismic, Y_train, files
+
+    
+    # preliminaries
+    # sample_rate_acoustic = 8000
+    # sample_rate_seismic = 100 
+
+    X_train_acoustic, X_train_seismic, Y_train, files = loaderHelper(filepath)
+    
+    
+    X_train_acoustic = np.array(X_train_acoustic)
+    X_train_seismic = np.array(X_train_seismic)
+    Y_train = np.array(Y_train)
+    
+    
+    
+    for i in range(len(X_train_acoustic)):
+        m = np.max(np.absolute(X_train_acoustic[i]))
+        X_train_acoustic[i] = X_train_acoustic[i]/m
+    for i in range(len(X_train_seismic)):
+        m = np.max(np.absolute(X_train_seismic[i]))
+        X_train_seismic[i] = X_train_seismic[i]/m
+
+    
+    print("X_train_acoustic shape: ", X_train_acoustic.shape)
+    print("X_train_seismic shape: ", X_train_seismic.shape)
+    print("Y_train shape: ", Y_train.shape)
+    return X_train_acoustic, X_train_seismic, Y_train, files
     
 if __name__ == "__main__":
-    filepath = "incas_data"
 
-    X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
-    sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
-    # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
-    sup_model=None # use saved model file
-    eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
-    # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
+    if False:
+        filepath = "incas_data"
+
+        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
+        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
+        # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
+        sup_model=None # use saved model file
+        eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
+        # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
+
+    else:
+        shake_filepath = "bedroom_pt_data"        
+        sup_model=None # use saved model file
+        X_val_acoustic, X_val_seismic, Y_val, files = load_shake_data(shake_filepath)
+
+        eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN,files=files)
+        # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
