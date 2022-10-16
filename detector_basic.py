@@ -211,8 +211,11 @@ def main():
 
     # simple model
     # model = pkl.load(open("/home/myshake/AutoCuration/src/models/model-original.pkl", "rb"))
-    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model-augmented.pkl", "rb"))
-                
+    # model = pkl.load(open("/home/myshake/AutoCuration/src/models/model-augmented.pkl", "rb"))
+    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_parkinglot_addedfeatures.pkl", "rb"))
+    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_with_mustang_1.pkl", "rb"))
+    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_with_mustang_2.pkl", "rb"))
+              
     try:
         target = -1
         N = 0
