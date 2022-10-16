@@ -108,50 +108,60 @@ def collect_seismic(client):
     client.select_stream('AM', StationID, 'EHZ')
     client.run()
 
-def createFeatures(X_acoustic, X_seismic,sample_len=None):
+def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
     # takes a single second dataframe and returns basic features
     # return pse with welch method for x
+    from added_features import applyAndReturnAllFeatures
     
     ## acoustic
     X = X_acoustic
     sample_len = 16000
     features_acoustic = []
     nperseg= 2000 # fft length up to 500 Hz
-    print(X.shape)
-    print(sample_len)
-    # exit()
-    #for index in range(len(X)):
-    x = X
-    f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
-    # take up to 1000 Hz
-    len_to_take = (1*len(f)) // 8 # (3*len(f)) // 4
-    # wandb.log({"len_to_take": len_to_take})
-    # wandb.log({"nperseg": nperseg})
-    
-    pse=Pxx_den[:len_to_take]
-    features_acoustic.append(np.asarray(pse).flatten())
+    for index in range(len(X)):
+        x = X[index] 
+        f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
+        # take up to 1000 Hz
+        len_to_take = (1*len(f)) // 8 # (3*len(f)) // 4
+        len_to_take = (3*len(f)) // 4
+        # wandb.log({"len_to_take": len_to_take})
+        # wandb.log({"nperseg": nperseg})
+        
+        pse=Pxx_den[:len_to_take]
+        
+        additonal_features = applyAndReturnAllFeatures(x)
+        additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
+        pse = np.concatenate((pse,additonal_features))
 
+        features_acoustic.append(np.asarray(pse).flatten())
+        pass
     ## seismic
     X = X_seismic
     sample_len = 200
     features_seismic = []
     nperseg= 25 # fft length up to 500 Hz
-    #for index in range(len(X)):
-    x = X 
-    f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
-    # take up to 100 Hz
-    len_to_take = len(f) # (1*len(f)) // 8
-    # wandb.log({"len_to_take": len_to_take})
-    # wandb.log({"nperseg": nperseg})
-    
-    pse=Pxx_den[:len_to_take]
-    features_seismic.append(np.asarray(pse).flatten())
+    for index in range(len(X)):
+        x = X[index] 
+        f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
+        # take up to 100 Hz
+        len_to_take = len(f) # (1*len(f)) // 8
+        # wandb.log({"len_to_take": len_to_take})
+        # wandb.log({"nperseg": nperseg})
+        
+        pse=Pxx_den[:len_to_take]
+
+        additonal_features = applyAndReturnAllFeatures(x)
+        additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
+        pse = np.concatenate((pse,additonal_features))
+
+        features_seismic.append(np.asarray(pse).flatten())
 
     # merge acoustic and seismic features
     features = []
     for i in range(len(features_acoustic)):
         features.append(np.concatenate((features_acoustic[i],features_seismic[i])))
 
+    
     return np.asarray(features)
     pass
 
