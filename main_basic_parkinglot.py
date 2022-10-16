@@ -266,6 +266,7 @@ def load_data_sedan(filepath, sample_len=256):
     X_test_seismic = np.array(X_test_seismic)
     Y_test = np.array(Y_test)
     
+    '''
     # X_train_shape = (11495, 1024, 5)
     # Y_train.shape = (11495, 9)
     for i in range(len(X_val_acoustic)):
@@ -289,7 +290,7 @@ def load_data_sedan(filepath, sample_len=256):
         m = np.max(np.absolute(X_test_seismic[i]))
         X_test_seismic[i] = X_test_seismic[i]/m
     
-
+    '''
 
     print("X_train_acoustic shape: ", X_train_acoustic.shape)
     print("X_train_seismic shape: ", X_train_seismic.shape)
@@ -389,33 +390,7 @@ def load_data_parkinglot(filepath, sample_len=256):
         test_set.extend(driving_test)
         test_set.extend(quiet_test)
         test_set.extend(engine_test)
-        '''
-        # set random seed as 42
-        random.seed(42)
-
-        # create training set with 70% of each type of file, and 15% of each type of file for test and val
-        for file in files_quiet:
-            if random.random() < 0.7:
-                training_set.append(file)
-            elif random.random() < 0.5:
-                test_set.append(file)
-            else:
-                val_set.append(file)
-        for file in files_driving:
-            if random.random() < 0.7:
-                training_set.append(file)
-            elif random.random() < 0.5:
-                test_set.append(file)
-            else:
-                val_set.append(file)
-        for file in files_engine:
-            if random.random() < 0.7:
-                training_set.append(file)
-            elif random.random() < 0.5:
-                test_set.append(file)
-            else:
-                val_set.append(file)
-        '''
+        
         # write the sets to files
         with open(os.path.join(filepath, "train_index.txt"), "w") as file:
             for line in training_set:
@@ -430,14 +405,6 @@ def load_data_parkinglot(filepath, sample_len=256):
         return os.path.join(filepath, "train_index.txt"), os.path.join(filepath, "test_index.txt"), os.path.join(filepath, "val_index.txt")
         #return training_set, test_set, val_set
     
-    '''
-    # preliminaries
-    train_index_file = "time_data_partition_walk/train_index.txt"
-    val_index_file = "time_data_partition_walk/val_index.txt"
-    test_index_file = "time_data_partition_walk/test_index.txt"
-    # sample_rate_acoustic = 8000
-    # sample_rate_seismic = 100 
-    '''
     # create indexes if they don't exist
     #if not os.path.exists(os.path.join(filepath, "train_index.txt")):
     train_index_file, test_index_file, val_index_file = createIndexes(filepath)
@@ -457,6 +424,7 @@ def load_data_parkinglot(filepath, sample_len=256):
     X_test_seismic = np.array(X_test_seismic)
     Y_test = np.array(Y_test)
     
+    '''
     # X_train_shape = (11495, 1024, 5)
     # Y_train.shape = (11495, 9)
     for i in range(len(X_val_acoustic)):
@@ -480,7 +448,7 @@ def load_data_parkinglot(filepath, sample_len=256):
         m = np.max(np.absolute(X_test_seismic[i]))
         X_test_seismic[i] = X_test_seismic[i]/m
     
-
+    '''
 
     print("X_train_acoustic shape: ", X_train_acoustic.shape)
     print("X_train_seismic shape: ", X_train_seismic.shape)
@@ -545,14 +513,14 @@ def load_shake_data(filepath, sample_len=256):
     Y_train = np.array(Y_train)
     
     
-    
+    '''
     for i in range(len(X_train_acoustic)):
         m = np.max(np.absolute(X_train_acoustic[i]))
         X_train_acoustic[i] = X_train_acoustic[i]/m
     for i in range(len(X_train_seismic)):
         m = np.max(np.absolute(X_train_seismic[i]))
         X_train_seismic[i] = X_train_seismic[i]/m
-
+    '''
     
     print("X_train_acoustic shape: ", X_train_acoustic.shape)
     print("X_train_seismic shape: ", X_train_seismic.shape)
@@ -562,7 +530,7 @@ def load_shake_data(filepath, sample_len=256):
 if __name__ == "__main__":
 
     mode = '0' # train data using pt_data
-    # mode = '1' # train data using both pt and sedan parkland data
+    mode = '1' # train data using both pt and sedan parkland data
     
     if mode=='0':
         filepath = "pt_data"
