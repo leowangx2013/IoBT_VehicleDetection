@@ -50,7 +50,9 @@ tf.random.set_seed(seed)
 SAMPLE_LEN = 1024
 
 import wandb
-# wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
+WANDB_ACTIVE=True
+if WANDB_ACTIVE:
+    wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
 
 def convertLabels(Y):
     # takes a list of one hot vectors and converts to integer labels
@@ -63,7 +65,7 @@ def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
     # takes a single second dataframe and returns basic features
     # return pse with welch method for x
     from added_features import applyAndReturnAllFeatures
-    
+    feature_names = []
     ## acoustic
     X = X_acoustic
     sample_len = 16000
@@ -75,17 +77,26 @@ def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
         # take up to 1000 Hz
         len_to_take = (1*len(f)) // 8 # (3*len(f)) // 4
         len_to_take = (3*len(f)) // 4
-        # wandb.log({"len_to_take": len_to_take})
-        # wandb.log({"nperseg": nperseg})
         
+        if WANDB_ACTIVE:
+            wandb.log({"len_to_take": len_to_take})
+            wandb.log({"nperseg": nperseg})
+            wandb.log({"f": f[:len_to_take]})
         pse=Pxx_den[:len_to_take]
         
         additonal_features = applyAndReturnAllFeatures(x)
+        additonal_feature_names = [k for k, v in sorted(additonal_features.items())] 
         additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
         pse = np.concatenate((pse,additonal_features))
 
         features_acoustic.append(np.asarray(pse).flatten())
         pass
+    # append to feature names
+    for i in range(len_to_take):
+        feature_names.append("pse_acoustic_f"+str(f[i]))
+    for i in range(len(additonal_features)):
+        feature_names.append('Acoustic'+additonal_feature_names[i])
+
     ## seismic
     X = X_seismic
     sample_len = 200
@@ -102,6 +113,7 @@ def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
         pse=Pxx_den[:len_to_take]
 
         additonal_features = applyAndReturnAllFeatures(x)
+        additonal_feature_names = [k for k, v in sorted(additonal_features.items())] 
         additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
         pse = np.concatenate((pse,additonal_features))
 
@@ -112,14 +124,19 @@ def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
     for i in range(len(features_acoustic)):
         features.append(np.concatenate((features_acoustic[i],features_seismic[i])))
 
-    
-    return np.asarray(features)
+    # append to feature names
+    for i in range(len_to_take):
+        feature_names.append("pse_seismic_f"+str(f[i]))
+    for i in range(len(additonal_features)):
+        feature_names.append('Seismic'+additonal_feature_names[i])
+
+    return np.asarray(features),feature_names
     pass
 
 def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, sample_len=SAMPLE_LEN):
     
-    X_train = createFeatures(X_train_acoustic,X_train_seismic)
-    X_val = createFeatures(X_val_acoustic,X_val_seismic)
+    X_train,feature_names = createFeatures(X_train_acoustic,X_train_seismic)
+    X_val,feature_names = createFeatures(X_val_acoustic,X_val_seismic)
     # Y_train = convertLabels(Y_train)
     # Y_val = convertLabels(Y_val)
 
@@ -130,6 +147,10 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
             early_stopping_rounds=20)
 
+    model.get_booster().feature_names = feature_names
+    # Interpret model
+    interpretModel(model,X_val,feature_names,name="Val")
+    interpretModel(model,X_train,feature_names,name="Train")
     if False:
         #model2= xgb.XGBClassifier(**model.get_params())
         print('Choosing best n_estimators as 50')
@@ -150,11 +171,12 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     if not model:
         model = pkl.load(open("model.pkl", "rb"))
 
-    X_test = createFeatures(X_val_acoustic,X_val_seismic)
+    X_test,feature_names = createFeatures(X_val_acoustic,X_val_seismic)
     # y_test = convertLabels(Y_val) +1
     y_test = Y_val
     y_pred = model.predict(X_test)
     y_pred_prob = model.predict_proba(X_test)
+    interpretModel(model,X_test,feature_names,name="Test")
     print("Evaluating end time: ",time.time())
     if files:
         print(len(files))
@@ -189,8 +211,12 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     s = sn.heatmap(df_cm, annot=True)
     s.set(xlabel='Prediction', ylabel='True Label')
     plt.savefig(f"./n_win={1024}.png")
-    wandb.log({"Confusion Matrix": wandb.Image(f"./n_win={1024}.png")})
-    wandb.log({"Accuracy": accuracy})
+    if WANDB_ACTIVE:
+        wandb.log({"Confusion Matrix": wandb.Image(f"./n_win={1024}.png")})
+        wandb.log({"Accuracy": accuracy})
+        wandb.log({"Precision": precision})
+        wandb.log({"Recall": recall})
+        wandb.log({"F1-Score": f_score})
     """
     print(f"Correctness = {correctness}, incorrectness = {incorrectness}, accuracy = {correctness / (correctness + incorrectness)}")
     wandb.log({"Accuracy": correctness / (correctness + incorrectness),
@@ -227,7 +253,7 @@ def load_data_sedan(filepath, sample_len=256):
                 
                 if True: # do 1vsrest with humvee
                     if "mustang" in file:
-                        label = np.array(0)
+                        label = np.array(1)
                     else:
                         label = np.array(0)
                     pass
@@ -526,7 +552,24 @@ def load_shake_data(filepath, sample_len=256):
     print("X_train_seismic shape: ", X_train_seismic.shape)
     print("Y_train shape: ", Y_train.shape)
     return X_train_acoustic, X_train_seismic, Y_train, files
-    
+
+def interpretModel(model,X_test,feature_names,name=None):
+    import shap
+    from matplotlib import pyplot
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test)
+    shap.summary_plot(shap_values, X_test,feature_names= feature_names,show=False)
+    if name:
+        figname= name + "Shapley_summary_plot.png"
+    else:
+        figname= "Shapley_summary_plot.png"
+    pyplot.savefig(figname,bbox_inches = "tight")
+    if WANDB_ACTIVE:
+        wandb.log({"Interpretation": wandb.Image(figname)})
+        
+    pyplot.close()
+
 if __name__ == "__main__":
 
     mode = '0' # train data using pt_data
@@ -541,7 +584,7 @@ if __name__ == "__main__":
         sup_model=None # use saved model file
         # eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
         eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
-
+        
     elif mode=='1':
         filepath = "sedan_data"
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_sedan(filepath)
