@@ -104,57 +104,59 @@ class MyClient(EasySeedLinkClient):
 
 def collect_seismic(client):
     ''' Select a stream and start receiving data '''
-    StationID = get_stationID()
+    # StationID = get_stationID()
+    StationID = "R105D"
     client.select_stream('AM', StationID, 'EHZ')
     client.run()
 
-def createFeatures(X_acoustic, X_seismic,sample_len=SAMPLE_LEN):
+def createFeatures(X_acoustic, X_seismic):
     # takes a single second dataframe and returns basic features
     # return pse with welch method for x
     from added_features import applyAndReturnAllFeatures
-    
+    #print("X_acoustic: ", X_acoustic.shape)
     ## acoustic
     X = X_acoustic
     sample_len = 16000
     features_acoustic = []
     nperseg= 2000 # fft length up to 500 Hz
-    for index in range(len(X)):
-        x = X[index] 
-        f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
-        # take up to 1000 Hz
-        len_to_take = (1*len(f)) // 8 # (3*len(f)) // 4
-        len_to_take = (3*len(f)) // 4
-        # wandb.log({"len_to_take": len_to_take})
-        # wandb.log({"nperseg": nperseg})
+    #for index in range(len(X)):
+    x = X
+    #print("x: ", x.shape)
+    f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
+    # take up to 1000 Hz
+    len_to_take = (1*len(f)) // 8 # (3*len(f)) // 4
+    len_to_take = (3*len(f)) // 4
+    # wandb.log({"len_to_take": len_to_take})
+    # wandb.log({"nperseg": nperseg})
         
-        pse=Pxx_den[:len_to_take]
+    pse=Pxx_den[:len_to_take]
         
-        additonal_features = applyAndReturnAllFeatures(x)
-        additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
-        pse = np.concatenate((pse,additonal_features))
+    additonal_features = applyAndReturnAllFeatures(x)
+    additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
+    pse = np.concatenate((pse,additonal_features))
 
-        features_acoustic.append(np.asarray(pse).flatten())
-        pass
+    features_acoustic.append(np.asarray(pse).flatten())
+    
     ## seismic
     X = X_seismic
     sample_len = 200
     features_seismic = []
     nperseg= 25 # fft length up to 500 Hz
-    for index in range(len(X)):
-        x = X[index] 
-        f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
-        # take up to 100 Hz
-        len_to_take = len(f) # (1*len(f)) // 8
-        # wandb.log({"len_to_take": len_to_take})
-        # wandb.log({"nperseg": nperseg})
+    #for index in range(len(X)):
+    x = X 
+    f, Pxx_den = signal.welch(x, sample_len, nperseg=nperseg)
+    # take up to 100 Hz
+    len_to_take = len(f) # (1*len(f)) // 8
+    # wandb.log({"len_to_take": len_to_take})
+    # wandb.log({"nperseg": nperseg})
         
-        pse=Pxx_den[:len_to_take]
+    pse=Pxx_den[:len_to_take]
 
-        additonal_features = applyAndReturnAllFeatures(x)
-        additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
-        pse = np.concatenate((pse,additonal_features))
+    additonal_features = applyAndReturnAllFeatures(x)
+    additonal_features = [v for k, v in sorted(additonal_features.items())] #list(additonal_features.values())
+    pse = np.concatenate((pse,additonal_features))
 
-        features_seismic.append(np.asarray(pse).flatten())
+    features_seismic.append(np.asarray(pse).flatten())
 
     # merge acoustic and seismic features
     features = []
@@ -210,12 +212,10 @@ def main():
     # output_details = interpreter.get_output_details()
 
     # simple model
-    # model = pkl.load(open("/home/myshake/AutoCuration/src/models/model-original.pkl", "rb"))
-    # model = pkl.load(open("/home/myshake/AutoCuration/src/models/model-augmented.pkl", "rb"))
-    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_parkinglot_addedfeatures.pkl", "rb"))
-    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_with_mustang_1.pkl", "rb"))
-    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_with_mustang_2.pkl", "rb"))
-              
+    #model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_mustanglabeled0.pkl", "rb"))
+    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_mustanglabeled1.pkl", "rb"))
+    model = pkl.load(open("/home/myshake/AutoCuration/src/models/model_onlypt.pkl", "rb"))
+    
     try:
         target = -1
         N = 0
