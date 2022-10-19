@@ -52,7 +52,7 @@ tf.random.set_seed(seed)
 
 SAMPLE_LEN = 1024
 
-WANDB_ACTIVE=False
+WANDB_ACTIVE=True
 if WANDB_ACTIVE:
     wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
 
@@ -143,7 +143,7 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
     # Y_val = convertLabels(Y_val)
 
 
-    print(Y_train)
+    
     model = xgb.XGBClassifier(objective='binary:logistic')#,verbosity=3)
     model.fit(X_train, Y_train,
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
@@ -349,14 +349,13 @@ def load_data_all(filepath):
 
             # do selection here
             if "non-humvee" in file or 'no-humvee' in file:
-                continue # remove
+                pass # remove
             elif "humvee" in file:
-                if random.random() < 0.99:
-                    continue
+                pass
             else:
-                if random.random() < 0.99:
+                if random.random() < 0.5:
                     continue
-                
+
             try:
                 sample = torch.load(os.path.join(filepath, file))
                 seismic= torch.flatten(sample['data']['shake']['seismic']).numpy()
@@ -732,17 +731,20 @@ if __name__ == "__main__":
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_all(filepath)
         
         # concatenate train and test data
-        X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
-        X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
-        Y_train = np.concatenate((Y_train, Y_test), axis=0)
+        #X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
+        #X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
+        #Y_train = np.concatenate((Y_train, Y_test), axis=0)
 
         print("X_train_acoustic shape: ", X_train_acoustic.shape)
         print("X_train_seismic shape: ", X_train_seismic.shape)
         print("Y_train shape: ", Y_train.shape)
 
         model_name = filepath
+        
+        #Y_train= Y_train.astype(int)
+        #Y_val= Y_val.astype(int)
 
-        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,model_name)
+        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val,model_name)
         # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
         # sup_model=None # use saved model file
         
