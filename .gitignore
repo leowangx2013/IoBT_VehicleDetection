@@ -6,4 +6,6 @@ augmented_data/
 incas_data/
 # time_data_partition/
 *.pkl
+sedan_data/
 bedroom_pt_data/
+pt_data/

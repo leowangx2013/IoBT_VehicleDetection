@@ -129,6 +129,7 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, sample_len=
     # y_test = convertLabels(Y_val) +1
     y_test = Y_val
     y_pred = model.predict(X_test)
+    y_pred_prob = model.predict_proba(X_test)
     print("Evaluating end time: ",time.time())
     if files:
         print(len(files))
@@ -401,15 +402,15 @@ def load_shake_data(filepath, sample_len=256):
     
 if __name__ == "__main__":
 
-    if False:
+    if True:
         filepath = "incas_data"
 
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
-        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
+        # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
         # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
         sup_model=None # use saved model file
-        eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
-        # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
+        # eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
+        eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
 
     else:
         shake_filepath = "bedroom_pt_data"        

@@ -353,7 +353,7 @@ if __name__ == "__main__":
     # filepath = "incas_data"
     filepath= "augmented_data"
 
-    if True:
+    if False:
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_humvee(filepath)
     else:
         # read from csv
