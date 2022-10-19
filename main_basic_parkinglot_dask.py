@@ -29,7 +29,10 @@ from matplotlib import pyplot
 import wandb
 from tqdm import tqdm
 from sklearn.metrics import multilabel_confusion_matrix
-
+import dask
+import xgboost
+import dask_xgboost
+import dask.array as da
 
 parser = argparse.ArgumentParser()
 
@@ -143,7 +146,7 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
     # Y_val = convertLabels(Y_val)
 
 
-    print(Y_train)
+    # model = xgb.XGBClassifier(objective='multi:softprob', n_estimators=400)
     model = xgb.XGBClassifier(objective='binary:logistic')#,verbosity=3)
     model.fit(X_train, Y_train,
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
@@ -151,8 +154,8 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
 
     model.get_booster().feature_names = feature_names
     # Interpret model
-    interpretModel(model,X_val,feature_names,name="Val")
-    interpretModel(model,X_train,feature_names,name="Train")
+    # interpretModel(model,X_val,feature_names,name="Val")
+    # interpretModel(model,X_train,feature_names,name="Train")
     if False:
         #model2= xgb.XGBClassifier(**model.get_params())
         print('Choosing best n_estimators as 50')
@@ -178,7 +181,7 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, model_name=
     y_test = Y_val
     y_pred = model.predict(X_test)
     y_pred_prob = model.predict_proba(X_test)
-    interpretModel(model,X_test,feature_names,name="Test")
+    # interpretModel(model,X_test,feature_names,name="Test")
     print("Evaluating end time: ",time.time())
     if files:
         print(len(files))
@@ -346,17 +349,6 @@ def load_data_all(filepath):
         X_train_seismic = []
         Y_train = []
         for file in train_index:
-
-            # do selection here
-            if "non-humvee" in file or 'no-humvee' in file:
-                continue # remove
-            elif "humvee" in file:
-                if random.random() < 0.99:
-                    continue
-            else:
-                if random.random() < 0.99:
-                    continue
-                
             try:
                 sample = torch.load(os.path.join(filepath, file))
                 seismic= torch.flatten(sample['data']['shake']['seismic']).numpy()
@@ -698,32 +690,7 @@ if __name__ == "__main__":
         sup_model=None # use saved model file
         # eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
         eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
-        
-    elif mode=='1':
-        filepath = "sedan_data"
-        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_sedan(filepath)
-        
-        filepath = "pt_data"
-        X_train_acoustic2, X_train_seismic2, Y_train2, X_val_acoustic2, X_val_seismic2, Y_val2, X_test_acoustic2, X_test_seismic2, Y_test2 = load_data_parkinglot(filepath)
-        
-
-        X_train_acoustic = np.concatenate((X_train_acoustic, X_train_acoustic2), axis=0)
-        X_train_seismic = np.concatenate((X_train_seismic, X_train_seismic2), axis=0)
-        Y_train = np.concatenate((Y_train, Y_train2), axis=0)
-        X_val_acoustic = np.concatenate((X_val_acoustic, X_val_acoustic2), axis=0)
-        X_val_seismic = np.concatenate((X_val_seismic, X_val_seismic2), axis=0)
-        Y_val = np.concatenate((Y_val, Y_val2), axis=0)
-        X_test_acoustic = np.concatenate((X_test_acoustic, X_test_acoustic2), axis=0)
-        X_test_seismic = np.concatenate((X_test_seismic, X_test_seismic2), axis=0)
-        Y_test = np.concatenate((Y_test, Y_test2), axis=0)
-        
-        #sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val)
-        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
-        # sup_model=None # use saved model file
-        #eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val, sample_len=SAMPLE_LEN)
-        eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
-
-        pass
+       
     
     elif mode=='2':
         filepath = "augmented_data_positive+negative_t=1000"
@@ -733,12 +700,13 @@ if __name__ == "__main__":
         
         # concatenate train and test data
         X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
-        X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
-        Y_train = np.concatenate((Y_train, Y_test), axis=0)
+        X_train_acoustic = da.from_array(X_train_acoustic, chunks=len(X_train_acoustic) // 20)
 
-        print("X_train_acoustic shape: ", X_train_acoustic.shape)
-        print("X_train_seismic shape: ", X_train_seismic.shape)
-        print("Y_train shape: ", Y_train.shape)
+        X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
+        X_train_seismic = da.from_array(X_train_seismic, chunks=len(X_train_seismic) // 20)
+
+        Y_train = np.concatenate((Y_train, Y_test), axis=0)
+        Y_train = da.from_array(Y_train, chunks=len(Y_train) // 20)
 
         model_name = filepath
 
