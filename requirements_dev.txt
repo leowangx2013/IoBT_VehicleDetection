@@ -14,7 +14,6 @@ decorator==5.1.1
 dm-tree==0.1.7
 docker-pycreds==0.4.0
 empy==3.3.4
-flatbuffers==22.9.24
 gast==0.3.3
 gitdb==4.0.9
 GitPython==3.1.27
@@ -80,7 +79,6 @@ tensorboard-plugin-wit==1.8.1
 tensorflow==2.10.0
 tensorflow-determinism==0.3.0
 tensorflow-estimator==2.10.0
-tensorflow-gpu==2.4.0
 tensorflow-io-gcs-filesystem==0.27.0
 tensorflow-probability==0.18.0
 termcolor==1.1.0
@@ -89,7 +87,6 @@ tomli==2.0.1
 torch==1.12.1
 torchaudio==0.12.1
 tqdm==4.64.1
-typing-extensions==3.7.4.3
 urllib3==1.26.12
 wandb==0.13.3
 Werkzeug==2.2.2

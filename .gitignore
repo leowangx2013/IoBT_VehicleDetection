@@ -9,3 +9,5 @@ incas_data/
 sedan_data/
 bedroom_pt_data/
 pt_data/
+augmented_data_positive+negative_t=1000/
+augmented_data_positive+negative_t=700/
