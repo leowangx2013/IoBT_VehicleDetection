@@ -144,7 +144,8 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
 
 
     
-    model = xgb.XGBClassifier(objective='binary:logistic')#,verbosity=3)
+    # model = xgb.XGBClassifier(objective='binary:logistic')#,verbosity=3)
+    model = xgb.XGBClassifier(objective='binary:logistic',n_estimators=400)#,verbosity=3)
     model.fit(X_train, Y_train,
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
             early_stopping_rounds=20)
@@ -353,8 +354,9 @@ def load_data_all(filepath):
             elif "humvee" in file:
                 pass
             else:
-                if random.random() < 0.5:
-                    continue
+                #if random.random() < 0.2:
+                #    continue
+                pass
 
             try:
                 sample = torch.load(os.path.join(filepath, file))
@@ -731,9 +733,9 @@ if __name__ == "__main__":
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_all(filepath)
         
         # concatenate train and test data
-        #X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
-        #X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
-        #Y_train = np.concatenate((Y_train, Y_test), axis=0)
+        X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
+        X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
+        Y_train = np.concatenate((Y_train, Y_test), axis=0)
 
         print("X_train_acoustic shape: ", X_train_acoustic.shape)
         print("X_train_seismic shape: ", X_train_seismic.shape)
