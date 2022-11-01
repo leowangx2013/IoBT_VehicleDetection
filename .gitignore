@@ -12,3 +12,7 @@ pt_data/
 augmented_data_positive+negative_t=1000/
 augmented_data_positive+negative_t=700/
 pt_data_mustang_10-28/
+mustang_data_aug_milcom/
+mustang_data_noaug_milcom/
+mustang_data_aug_milcom_old/
+mustang_data_noaug_milcom_old/
