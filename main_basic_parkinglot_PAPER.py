@@ -189,7 +189,7 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, model_name=
         for line in f:
             files.append(line.strip())
 
-    if files:
+    if files and False:
         print(len(files))
         #print files where prediction is wrong
         for i in range(len(y_pred)):
@@ -532,6 +532,18 @@ def load_data_parkinglot(filepath, sample_len=256):
         # files including 'engine'
         files_engine = []
         for file in files:
+            if not filepath == 'pt_data':
+                pass
+                val_set = 'sand_'
+                val_set = 'statefarm_'
+                val_set = 'siebel_'
+                #if 'sand_' in file:
+                #    continue
+                if 'statefarm_' in file:
+                    continue
+                if 'siebel_' in file:
+                    continue
+
             if "quiet" in file:
                 files_quiet.append(file)
             elif "driving" in file:
@@ -769,13 +781,33 @@ if __name__ == "__main__":
         pass
     
     elif mode=='3':
+
+        # Figure 3
         #filepath ='pt_data_mustang_10-28'
-        filepath = 'mustang_data_aug_milcom'
+        # filepath = 'mustang_data_aug_milcom'
         #filepath = 'mustang_data_noaug_milcom'
+        
+        # Figure 4
+        figure_4 = True
+        #filepath = 'mustang_data_noaug_milcom'
+        # filepath = 'mustang_data_aug_milcom'
+        filepath = 'pt_data'
+        filepath2 = 'pt_data_mustang_testing_milcom'
 
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
         
-        if not CROSS_TRAIN:
+        if figure_4:
+            X_train_acoustic2, X_train_seismic2, Y_train2, X_val_acoustic2, X_val_seismic2, Y_val2, X_test_acoustic2, X_test_seismic2, Y_test2 = load_data_parkinglot(filepath2)
+
+            X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic,X_val_acoustic), axis=0)
+            X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic,X_val_seismic), axis=0)
+            Y_train = np.concatenate((Y_train, Y_test,Y_val), axis=0)
+
+            X_val_acoustic = np.concatenate((X_train_acoustic2, X_test_acoustic2,X_val_acoustic2), axis=0)
+            X_val_seismic = np.concatenate((X_train_seismic2, X_test_seismic2,X_val_seismic2), axis=0)
+            Y_val = np.concatenate((Y_train2, Y_test2,Y_val2), axis=0)
+        
+        if not CROSS_TRAIN and not figure_4:
             # concatenate train and test data
             X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
             X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
