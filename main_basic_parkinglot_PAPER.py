@@ -51,7 +51,7 @@ tf.random.set_seed(seed)
 
 
 SAMPLE_LEN = 1024
-CROSS_TRAIN = True # use one environment as test set
+CROSS_TRAIN = False # use one environment as test set
 WANDB_ACTIVE = False
 if WANDB_ACTIVE:
     wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
@@ -146,7 +146,7 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
 
     
     # model = xgb.XGBClassifier(objective='binary:logistic')#,verbosity=3)
-    model = xgb.XGBClassifier(objective='binary:logistic',n_estimators=400)#,verbosity=3)
+    model = xgb.XGBClassifier(objective='binary:logistic',n_estimators=2)#,verbosity=3)
     model.fit(X_train, Y_train,
             eval_set=[(X_train, Y_train), (X_val, Y_val)], 
             early_stopping_rounds=20)
@@ -504,9 +504,9 @@ def load_data_parkinglot(filepath, sample_len=256):
         val_set = 'siebel_'
         # val_set = None
         if not CROSS_TRAIN:
-            train = filelist[:int(len(filelist)*0.8)]
-            val = filelist[int(len(filelist)*0.8):int(len(filelist)*0.9)]
-            test = filelist[int(len(filelist)*0.9):]
+            train = filelist[:int(len(filelist)*0.7)]
+            test = filelist[int(len(filelist)*0.7):int(len(filelist)*0.8)]
+            val = filelist[int(len(filelist)*0.8):]
         else:
             print("Current val_set: ", val_set)
             train = []
@@ -531,6 +531,12 @@ def load_data_parkinglot(filepath, sample_len=256):
         # files including 'engine'
         files_engine = []
         for file in files:
+            val_set = 'sand_'
+            val_set = 'statefarm_'
+            val_set = 'siebel_'
+            
+            if val_set in file:
+                continue
             if "quiet" in file:
                 files_quiet.append(file)
             elif "driving" in file:
@@ -771,7 +777,7 @@ if __name__ == "__main__":
 
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
         
-        if not CROSS_TRAIN:
+        if not CROSS_TRAIN and False:
             # concatenate train and test data
             X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
             X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
@@ -786,7 +792,7 @@ if __name__ == "__main__":
         #Y_train= Y_train.astype(int)
         #Y_val= Y_val.astype(int)
 
-        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val,model_name)
+        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test,model_name)
         # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test)
         # sup_model=None # use saved model file
         
