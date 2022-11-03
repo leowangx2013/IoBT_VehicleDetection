@@ -51,7 +51,7 @@ tf.random.set_seed(seed)
 
 
 SAMPLE_LEN = 1024
-CROSS_TRAIN = False # use one environment as test set
+CROSS_TRAIN = True # use one environment as test set
 WANDB_ACTIVE = False
 if WANDB_ACTIVE:
     wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
@@ -201,12 +201,12 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, model_name=
     print('Accuracy: %.3f' % accuracy)
     
     # find the sequence number of current window length
-    precision = precision_score(y_test, y_pred, average='binary')
+    precision = precision_score(y_test, y_pred, average='macro')
     print('Precision: %.3f' % precision)
-    recall = recall_score(y_test, y_pred, average='binary')
+    recall = recall_score(y_test, y_pred, average='macro')
     print('Recall: %.3f' % recall)
     
-    f_score = f1_score(y_test,y_pred,average='binary')
+    f_score = f1_score(y_test,y_pred,average='macro')
     print('F1-Score: %.3f' % f_score)
     
     ## better confusion matrix
@@ -214,6 +214,7 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, model_name=
     Y_val_labeled = y_test
     
     con_mat = confusion_matrix(y_test, y_pred)
+    print(con_mat)
     con_mat = con_mat / con_mat.sum(axis=1, keepdims=True)
     df_cm = pd.DataFrame(con_mat, range(len(set(y_test))), range(len(set(y_test))))
     plt.figure(figsize=(10,7))
@@ -477,8 +478,6 @@ def load_data_parkinglot(filepath, sample_len=256):
                         label = np.array(1)
                     elif "engine" in file:
                         label = np.array(1)
-                    elif 'mustang' in file:
-                        label = np.array(1)
                     else:
                         label = np.array(0)
                     pass
@@ -505,9 +504,9 @@ def load_data_parkinglot(filepath, sample_len=256):
         val_set = 'siebel_'
         # val_set = None
         if not CROSS_TRAIN:
-            train = filelist[:int(len(filelist)*0.7)]
-            test = filelist[int(len(filelist)*0.7):int(len(filelist)*0.8)]
-            val = filelist[int(len(filelist)*0.8):]
+            train = filelist[:int(len(filelist)*0.8)]
+            val = filelist[int(len(filelist)*0.8):int(len(filelist)*0.9)]
+            test = filelist[int(len(filelist)*0.9):]
         else:
             print("Current val_set: ", val_set)
             train = []
@@ -532,18 +531,6 @@ def load_data_parkinglot(filepath, sample_len=256):
         # files including 'engine'
         files_engine = []
         for file in files:
-            if not filepath == 'pt_data':
-                pass
-                val_set = 'sand_'
-                val_set = 'statefarm_'
-                val_set = 'siebel_'
-                #if 'sand_' in file:
-                #    continue
-                if 'statefarm_' in file:
-                    continue
-                if 'siebel_' in file:
-                    continue
-
             if "quiet" in file:
                 files_quiet.append(file)
             elif "driving" in file:
@@ -552,11 +539,9 @@ def load_data_parkinglot(filepath, sample_len=256):
                 files_engine.append(file)
             elif 'txt' in file:
                 continue
-            elif '.pt' in file: # added this for use with no index file
-                files_driving.append(file)
             else:
                 print("Error: file not in quiet, driving, engine: ", file)
-
+        
         training_set = []
         test_set = []
         val_set = []
@@ -781,33 +766,12 @@ if __name__ == "__main__":
         pass
     
     elif mode=='3':
-
-        # Figure 3
         #filepath ='pt_data_mustang_10-28'
-        # filepath = 'mustang_data_aug_milcom'
-        #filepath = 'mustang_data_noaug_milcom'
-        
-        # Figure 4
-        figure_4 = True
-        #filepath = 'mustang_data_noaug_milcom'
-        # filepath = 'mustang_data_aug_milcom'
-        filepath = 'pt_data'
-        filepath2 = 'pt_data_mustang_testing_milcom'
+        filepath ='pt_data_mustang_testing_milcom_aug'
 
         X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
         
-        if figure_4:
-            X_train_acoustic2, X_train_seismic2, Y_train2, X_val_acoustic2, X_val_seismic2, Y_val2, X_test_acoustic2, X_test_seismic2, Y_test2 = load_data_parkinglot(filepath2)
-
-            X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic,X_val_acoustic), axis=0)
-            X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic,X_val_seismic), axis=0)
-            Y_train = np.concatenate((Y_train, Y_test,Y_val), axis=0)
-
-            X_val_acoustic = np.concatenate((X_train_acoustic2, X_test_acoustic2,X_val_acoustic2), axis=0)
-            X_val_seismic = np.concatenate((X_train_seismic2, X_test_seismic2,X_val_seismic2), axis=0)
-            Y_val = np.concatenate((Y_train2, Y_test2,Y_val2), axis=0)
-        
-        if not CROSS_TRAIN and not figure_4:
+        if not CROSS_TRAIN:
             # concatenate train and test data
             X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
             X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
