@@ -155,14 +155,14 @@ def train_supervised_basic(X_train_acoustic, X_train_seismic, Y_train, X_val_aco
     # Interpret model
     interpretModel(model,X_val,feature_names,name="Val")
     interpretModel(model,X_train,feature_names,name="Train")
-    if False:
+    if True:
         #model2= xgb.XGBClassifier(**model.get_params())
         print('Choosing best n_estimators as 50')
-        model2= xgb.XGBClassifier(n_estimators=80,objective='binary:logistic',verbosity=3)
+        model2= xgb.XGBClassifier(n_estimators=80,objective='binary:logistic')
         full_train =np.concatenate((X_train,X_val))
         full_label = np.concatenate((Y_train,Y_val))
         model2.fit(full_train, full_label)
-        pkl.dump(model2, open("model.pkl", "wb"))
+        pkl.dump(model2, open(model_name+".pkl", "wb"))
         return model2
     else:
         pkl.dump(model, open(model_name+".pkl", "wb"))
@@ -173,8 +173,8 @@ def eval_supervised_basic(model,X_val_acoustic,X_val_seismic, Y_val, model_name=
     import time
     print("Evaluating start time: ",time.time())
     if not model:
-        model = pkl.load(open(model_name+".pkl", "rb"))
-
+        #model = pkl.load(open(model_name+".pkl", "rb"))
+        pass
     X_test,feature_names = createFeatures(X_val_acoustic,X_val_seismic)
     # y_test = convertLabels(Y_val) +1
     y_test = Y_val
@@ -250,20 +250,33 @@ def load_data_sedan(filepath, sample_len=256):
         with open(index_filepath, "r") as file:
             for line in file:
                 # last part of the line directory is the filename
-                train_index.append(line.split("/")[-1].strip())
+                # append the last two directories to the path
+                train_index.append(os.path.join(line.split("/")[-2].strip(),line.split("/")[-1].strip()))
+                #train_index.append(line.split("/")[-1].strip())
         # read training data from filepath
         X_train_acoustic = []
         X_train_seismic = []
         Y_train = []
         for file in train_index:
             try:
-                sample = torch.load(os.path.join(filepath, file))
+                #sample = torch.load(os.path.join(filepath, file))
+                sample= torch.load(file)
                 seismic= torch.flatten(sample['data']['shake']['seismic']).numpy()
                 acoustic = torch.flatten(sample['data']['shake']['audio']).numpy()
                 
                 if True: # do 1vsrest with humvee
-                    if "mustang" in file:
+                    if "driving" in file:
                         label = np.array(1)
+                    elif "engine" in file:
+                        label = np.array(1)
+                    elif 'mustang' in file:
+                        label = np.array(1)
+                    
+                    #elif 'quiet' in file:
+                    #    label = np.array(0)
+                    
+                    #elif 'humvee' in file:
+                    #    label = np.array(1)
                     else:
                         label = np.array(0)
                     pass
@@ -281,9 +294,9 @@ def load_data_sedan(filepath, sample_len=256):
 
     
     # preliminaries
-    train_index_file = "time_data_partition_mustang/train_index.txt"
-    val_index_file = "time_data_partition_mustang/val_index.txt"
-    test_index_file = "time_data_partition_mustang/test_index.txt"
+    train_index_file = 'time_data_partition_mustang_development_milcom_noaug/train_index.txt'#"time_data_partition_mustang/train_index.txt"
+    val_index_file = 'time_data_partition_mustang_development_milcom_noaug/val_index.txt'#"time_data_partition_mustang/val_index.txt"
+    test_index_file = 'time_data_partition_mustang_development_milcom_noaug/test_index.txt'#"time_data_partition_mustang/test_index.txt"
     # sample_rate_acoustic = 8000
     # sample_rate_seismic = 100 
 
@@ -533,15 +546,16 @@ def load_data_parkinglot(filepath, sample_len=256):
         files_engine = []
         for file in files:
             #if not filepath == 'siebel_10-16':
-            if 'pt_data_mustang_10-28' in filepath:
+            #if 'pt_data_mustang_10-28' in filepath:
+            if 'pt_data_mustang_testing_milcom_aug' in filepath:
                 pass
                 val_set = 'sand_'
                 val_set = 'statefarm_'
                 val_set = 'siebel_'
-                #if 'sand_' in file:
-                #    continue
-                if 'statefarm_' in file:
+                if 'sand_' in file:
                     continue
+                #if 'statefarm_' in file:
+                #    continue
                 if 'siebel_' in file:
                     continue
                 
@@ -739,7 +753,7 @@ if __name__ == "__main__":
     mode = '1' # train data using both pt and sedan parkland data
     mode = '2' # FINAL model, use all data
     mode = '3' # train data using new pt data
-    mode = '4' # train data using new pt data and sedan parkland data
+    # mode = '4' # train data using new pt data and sedan parkland data
     if mode=='0':
         filepath = "pt_data"
 
@@ -830,17 +844,20 @@ if __name__ == "__main__":
         # filepath2 = 'pt_data_mustang_testing_milcom_aug'
         filepath = 'pt_data_mustang_10-28'
         
-        # filepath = 'siebel_10-16'
-        filepath2 = 'pt_data'
+        # filepath2 = 'siebel_10-16'
+        #filepath2 = 'pt_data'
         
-        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
+        #filepath2 = 'siebel_10-16'
+        filepath2 = 'pt_data_mustang_testing_milcom_aug'
+        
+        #X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
         
         if figure_4:
             X_train_acoustic2, X_train_seismic2, Y_train2, X_val_acoustic2, X_val_seismic2, Y_val2, X_test_acoustic2, X_test_seismic2, Y_test2 = load_data_parkinglot(filepath2)
 
-            X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic,X_val_acoustic), axis=0)
-            X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic,X_val_seismic), axis=0)
-            Y_train = np.concatenate((Y_train, Y_test,Y_val), axis=0)
+            #X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic,X_val_acoustic), axis=0)
+            #X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic,X_val_seismic), axis=0)
+            #Y_train = np.concatenate((Y_train, Y_test,Y_val), axis=0)
 
             X_val_acoustic = np.concatenate((X_train_acoustic2, X_test_acoustic2,X_val_acoustic2), axis=0)
             X_val_seismic = np.concatenate((X_train_seismic2, X_test_seismic2,X_val_seismic2), axis=0)
@@ -848,13 +865,14 @@ if __name__ == "__main__":
         
         if not CROSS_TRAIN and not figure_4:
             # concatenate train and test data
-            X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
-            X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
-            Y_train = np.concatenate((Y_train, Y_test), axis=0)
+            #X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic), axis=0)
+            #X_train_seismic = np.concatenate((X_train_seismic, X_test_seismic), axis=0)
+            #Y_train = np.concatenate((Y_train, Y_test), axis=0)
+            pass
 
-        print("X_train_acoustic shape: ", X_train_acoustic.shape)
-        print("X_train_seismic shape: ", X_train_seismic.shape)
-        print("Y_train shape: ", Y_train.shape)
+        print("X_train_acoustic shape: ", X_val_acoustic.shape)
+        print("X_train_seismic shape: ", X_val_seismic.shape)
+        print("Y_train shape: ", Y_val.shape)
 
         model_name = filepath
         
@@ -862,8 +880,13 @@ if __name__ == "__main__":
         #Y_val= Y_val.astype(int)
 
         # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val,model_name)
-        sup_model = pkl.load(open('simple_mustang'+".pkl", "rb"))
-
+        # sup_model = pkl.load(open('simple_mustang'+".pkl", "rb"))
+        # sup_model = pkl.load(open('new_model'+".pkl", "rb"))
+        # sup_model = pkl.load(open('new_model_2'+".pkl", "rb"))
+        sup_model = pkl.load(open('new_model_3'+".pkl", "rb"))
+        # sup_model = pkl.load(open('new_model_4'+".pkl", "rb"))
+        # sup_model = pkl.load(open('model'+".pkl", "rb"))
+        
         eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val,model_name,files = filepath)
         # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)
 
@@ -871,13 +894,8 @@ if __name__ == "__main__":
 
         
 
-        # Figure 3
-        #filepath ='pt_data_mustang_10-28'
-        # filepath = 'mustang_data_aug_milcom'
-        #filepath = 'mustang_data_noaug_milcom'
-        
         # Figure 4
-        figure_4 = True
+        figure_4 = False
         #filepath = 'mustang_data_noaug_milcom'
         # filepath = 'mustang_data_aug_milcom'
         
@@ -887,9 +905,9 @@ if __name__ == "__main__":
         # filepath = 'siebel_10-16'
         filepath2 = 'pt_data'
         
-        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_parkinglot(filepath)
+        X_train_acoustic, X_train_seismic, Y_train, X_val_acoustic, X_val_seismic, Y_val, X_test_acoustic, X_test_seismic, Y_test = load_data_sedan(filepath)
         
-        if figure_4:
+        if False and figure_4:
             X_train_acoustic2, X_train_seismic2, Y_train2, X_val_acoustic2, X_val_seismic2, Y_val2, X_test_acoustic2, X_test_seismic2, Y_test2 = load_data_parkinglot(filepath2)
 
             X_train_acoustic = np.concatenate((X_train_acoustic, X_test_acoustic,X_val_acoustic), axis=0)
@@ -910,13 +928,18 @@ if __name__ == "__main__":
         print("X_train_seismic shape: ", X_train_seismic.shape)
         print("Y_train shape: ", Y_train.shape)
 
-        model_name = filepath
+        model_name = 'new_model'# filepath
+        model_name = 'new_model_2'# filepath
+        model_name = 'new_model_3'# filepath
+        model_name = 'new_model_4'# filepath
         
         #Y_train= Y_train.astype(int)
         #Y_val= Y_val.astype(int)
 
-        # sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val,model_name)
-        sup_model = pkl.load(open('simple_mustang'+".pkl", "rb"))
+        sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_val_acoustic,X_val_seismic,Y_val,model_name)
+        #sup_model = train_supervised_basic(X_train_acoustic,X_train_seismic, Y_train, X_test_acoustic,X_test_seismic,Y_test,model_name)
+        
+        # sup_model = pkl.load(open('simple_mustang'+".pkl", "rb"))
 
         eval_supervised_basic(sup_model,X_val_acoustic,X_val_seismic, Y_val,model_name,files = filepath)
         # eval_supervised_basic(sup_model,X_test_acoustic,X_test_seismic, Y_test, sample_len=SAMPLE_LEN)

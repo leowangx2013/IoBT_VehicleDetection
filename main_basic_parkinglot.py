@@ -52,7 +52,7 @@ tf.random.set_seed(seed)
 
 SAMPLE_LEN = 1024
 
-WANDB_ACTIVE=True
+WANDB_ACTIVE=False
 if WANDB_ACTIVE:
     wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
 
@@ -689,7 +689,7 @@ if __name__ == "__main__":
 
     mode = '0' # train data using pt_data
     mode = '1' # train data using both pt and sedan parkland data
-    mode = '2' # FINAL model, use all data
+    # mode = '2' # FINAL model, use all data
     if mode=='0':
         filepath = "pt_data"
 
