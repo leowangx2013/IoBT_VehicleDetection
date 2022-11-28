@@ -28,9 +28,12 @@ tf.random.set_seed(seed)
 
 
 SAMPLE_LEN = 1024
+WANDB_ACTIVE = True
+# WANDB_ACTIVE = True
 
-import wandb
-wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
+if WANDB_ACTIVE:
+    import wandb
+    wandb.init(project="IoBT-vehicleclassification", entity="uiuc-dkara")
 
 # Read dataset
 filepath = "./data/Tank_classification/Tank_classification/Code/data/split_run"

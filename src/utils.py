@@ -35,7 +35,7 @@ def train_supervised(X_train_labeled, Y_train_labeled, X_val_labeled, Y_val_labe
     First build the whole model -- encoder + classifer layers.
     Then train the model from very beginning.
     '''
-    encoder = model_LSTM_frequency(input_shape=[sample_len, 5])
+    encoder = model_LSTM_frequency_orig(input_shape=[sample_len, 5])
     # encoder = model_vanilla()
     inputs = encoder.inputs
 
